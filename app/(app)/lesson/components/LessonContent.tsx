@@ -16,19 +16,19 @@ interface LessonContentProps {
     content: Record<string, unknown> | null
 }
 
-const resourceTypeIcon = {
+const resourceTypeIcon: { [key: string]: any } = {
     article: FileText,
     docs: BookOpen,
     video: Globe,
     tool: Globe,
-}
+};
 
-const resourceTypeLabel: Record<string, string> = {
+const resourceTypeLabel: { [key: string]: string } = {
     article: 'Article',
     docs: 'Documentation',
     video: 'Video',
     tool: 'Tool',
-}
+};
 
 function Markdown({ children }: { children: string }) {
     return (
