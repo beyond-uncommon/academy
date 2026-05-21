@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from '@/components/ui/sonner'
 import { PWAProvider } from '@/components/PWAProvider'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
 import './globals.css'
 
 const inter = Inter({
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
         <PWAProvider>
           {children}
+          <OfflineIndicator />
           <Toaster richColors position="bottom-right" />
         </PWAProvider>
       </body>

@@ -9,6 +9,7 @@ import { CompleteLessonButton } from '../components/CompleteLessonButton'
 import { AssessmentPlayer } from '../../assessment/components/AssessmentPlayer'
 import { ProjectSubmission } from '../components/ProjectSubmission'
 import { LessonContent } from '../components/LessonContent'
+import { SaveOfflineButton, OfflineBadge } from '@/components/SaveOffline'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Lesson' }
@@ -87,7 +88,10 @@ export default async function LessonPage({
 
             <div className="flex items-start justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold">{lesson.title}</h1>
+                    <div className="flex items-center gap-2">
+                        <h1 className="text-2xl font-bold">{lesson.title}</h1>
+                        <OfflineBadge url={`/lesson/${id}`} />
+                    </div>
                     <div className="flex items-center gap-3 mt-2">
                         <Badge variant="outline" className="text-xs capitalize">{lesson.type}</Badge>
                         <span className="text-xs text-muted-foreground flex items-center gap-1">
@@ -100,6 +104,7 @@ export default async function LessonPage({
                         </span>
                     </div>
                 </div>
+                <SaveOfflineButton url={`/lesson/${id}`} />
             </div>
 
             <Card className="border-border/40">
