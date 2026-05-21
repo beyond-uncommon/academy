@@ -1,9 +1,10 @@
-import { Zap, Flame, Shield } from 'lucide-react'
+import { Zap, Flame, Shield, Search } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { RANK_LABELS, type Rank } from '@/types'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
+import { SearchBar } from '@/components/search/SearchBar'
 
 interface TopBarProps {
     totalXP?: number
@@ -18,7 +19,7 @@ export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = f
     return (
         <header className="h-14 border-b border-border/40 bg-background/80 backdrop-blur-sm flex items-center justify-end px-6 gap-6 sticky top-0 z-40">
             {isAdmin && (
-                <div className="mr-auto">
+                <div className="mr-auto flex items-center gap-3">
                     <Link href="/admin">
                         <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
                             <Shield className="w-4 h-4" />
@@ -27,6 +28,11 @@ export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = f
                     </Link>
                 </div>
             )}
+
+            {!isAdmin && <div className="mr-auto" />}
+
+            {/* Search */}
+            <SearchBar />
 
             {/* Notifications */}
             <NotificationBell initialUnread={unreadNotifications} initialNotifications={notifications} />

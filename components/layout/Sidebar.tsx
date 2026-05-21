@@ -16,6 +16,7 @@ import {
     Briefcase,
     ClipboardCheck,
     Activity,
+    Search,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -26,6 +27,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/courses', label: 'Courses', icon: BookOpen },
+    { href: '/search', label: 'Search', icon: Search },
     { href: '/community', label: 'Community', icon: Users },
     { href: '/career', label: 'Career', icon: Briefcase },
     { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
