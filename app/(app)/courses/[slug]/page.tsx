@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench, ClipboardCheck, Lock, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -15,14 +15,14 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: course?.title || 'Course' } satisfies Metadata
 }
 
-const lessonTypeIcon = {
+const lessonTypeIcon: Record<string, any> = {
     video: Video,
     text: FileText,
     project: Wrench,
     interactive: Zap,
 }
 
-const lessonTypeLabel = {
+const lessonTypeLabel: Record<string, string> = {
     video: 'Video',
     text: 'Reading',
     project: 'Project',
@@ -60,6 +60,41 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
     const completedIds = new Set(userProgress?.map(p => p.lesson_id) || [])
 
+    // Fetch module assessments for this course
+    const moduleIds = (course.modules || []).map((m: any) => m.id)
+    const { data: moduleAssessments } = await supabase
+        .from('quizzes')
+        .select('*, questions:quiz_questions(count)')
+        .in('module_id', moduleIds)
+        .eq('type', 'module')
+        .eq('is_published', true)
+
+    // Fetch course-level assessment
+    const { data: courseAssessment } = await supabase
+        .from('quizzes')
+        .select('*, questions:quiz_questions(count)')
+        .eq('course_id', course.id)
+        .eq('type', 'course')
+        .eq('is_published', true)
+        .maybeSingle()
+
+    // Fetch user's assessment statuses
+    const assessmentMap = new Map<string, any>()
+    if (moduleAssessments) {
+        for (const a of moduleAssessments) {
+            const { data } = await supabase
+                .rpc('get_assessment_status', { p_user_id: user.id, p_quiz_id: a.id })
+            const status = Array.isArray(data) ? data[0] : data
+            assessmentMap.set(a.id, status || { attempt_count: 0, best_score: 0, passed: false })
+        }
+    }
+    if (courseAssessment) {
+        const { data } = await supabase
+            .rpc('get_assessment_status', { p_user_id: user.id, p_quiz_id: courseAssessment.id })
+        const status = Array.isArray(data) ? data[0] : data
+        assessmentMap.set(courseAssessment.id, status || { attempt_count: 0, best_score: 0, passed: false })
+    }
+
     const modules = [...(course.modules || [])].sort((a: any, b: any) => a.order_index - b.order_index)
 
     const allLessons = modules.flatMap((m: any) =>
@@ -73,13 +108,11 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
-            {/* Back link */}
             <Link href="/courses" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" />
                 All courses
             </Link>
 
-            {/* Course header */}
             <div className="space-y-3">
                 <div className="flex flex-wrap items-center gap-2">
                     <Badge variant="secondary" className="capitalize text-xs">
@@ -88,9 +121,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                     {course.phase && <Badge variant="outline" className="text-xs">Phase {course.phase}</Badge>}
                 </div>
                 <h1 className="text-2xl font-bold">{course.title}</h1>
-                {course.description && (
-                    <p className="text-muted-foreground">{course.description}</p>
-                )}
+                {course.description && <p className="text-muted-foreground">{course.description}</p>}
                 <div className="flex items-center gap-4 text-sm text-muted-foreground">
                     <span>{modules.length} modules</span>
                     <span>{totalLessons} lessons</span>
@@ -99,7 +130,6 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                 <Progress value={pct} className="h-2" />
             </div>
 
-            {/* CTA */}
             {nextLesson && (
                 <Link href={`/lesson/${nextLesson.id}`}>
                     <Button className="gap-2">
@@ -108,16 +138,18 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                     </Button>
                 </Link>
             )}
-            {pct === 100 && (
-                <p className="text-sm text-green-500 font-medium">You have completed this course!</p>
-            )}
 
-            {/* Modules & lessons */}
+            {/* Modules & lessons with assessments */}
             <div className="space-y-4">
                 {modules.map((module: any, i: number) => {
                     const lessons = [...(module.lessons || [])].sort((a: any, b: any) => a.order_index - b.order_index)
                     const modCompleted = lessons.filter((l: any) => completedIds.has(l.id)).length
                     const modPct = lessons.length > 0 ? Math.round((modCompleted / lessons.length) * 100) : 0
+                    const allLessonsInModDone = lessons.length > 0 && lessons.every((l: any) => completedIds.has(l.id))
+
+                    // Find module assessment
+                    const modAssessment = moduleAssessments?.find((a: any) => a.module_id === module.id)
+                    const modAssessmentStatus = modAssessment ? assessmentMap.get(modAssessment.id) : null
 
                     return (
                         <Card key={module.id} className="border-border/40">
@@ -170,11 +202,122 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                                         )
                                     })}
                                 </ul>
+
+                                {/* Module assessment entry */}
+                                {modAssessment && (
+                                    <ModuleAssessmentEntry
+                                        assessment={modAssessment}
+                                        status={modAssessmentStatus}
+                                        allLessonsDone={allLessonsInModDone}
+                                    />
+                                )}
                             </CardContent>
                         </Card>
                     )
                 })}
             </div>
+
+            {/* Course-level assessment */}
+            {courseAssessment && (
+                <Card className="border-border/40 border-primary/20">
+                    <CardHeader className="pb-2">
+                        <CardTitle className="text-sm">Course Assessment</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <CourseAssessmentEntry
+                            assessment={courseAssessment}
+                            status={assessmentMap.get(courseAssessment.id)}
+                            allModulesDone={modules.every((m: any) => {
+                                const mLessons = [...(m.lessons || [])].filter((l: any) => l.is_published)
+                                return mLessons.length > 0 && mLessons.every((l: any) => completedIds.has(l.id))
+                            })}
+                        />
+                    </CardContent>
+                </Card>
+            )}
         </div>
     )
 }
+
+function ModuleAssessmentEntry({
+    assessment,
+    status,
+    allLessonsDone,
+}: {
+    assessment: any
+    status: any
+    allLessonsDone: boolean
+}) {
+    const questionCount = assessment.questions?.[0]?.count || 0
+    const passed = status?.has_passed || false
+    const canAccess = allLessonsDone && !passed
+
+    return (
+        <div className="mt-3 pt-3 border-t border-border/40">
+            <Link
+                href={canAccess ? `/assessments/${assessment.id}` : '#'}
+                className={`flex items-center gap-3 py-2 px-2 rounded-md transition-colors group ${canAccess ? 'hover:bg-muted/50' : 'opacity-60 cursor-not-allowed'}`}
+                onClick={(e) => { if (!canAccess) e.preventDefault() }}
+            >
+                {passed ? (
+                    <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+                ) : !allLessonsDone ? (
+                    <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+                ) : (
+                    <ClipboardCheck className="w-4 h-4 text-primary shrink-0" />
+                )}
+                <span className={`flex-1 text-sm ${passed ? 'text-muted-foreground line-through' : ''}`}>
+                    Module Assessment{passed ? ' (Passed)' : ''}
+                </span>
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <span>{questionCount} questions</span>
+                    {assessment.time_limit_minutes && <span>{assessment.time_limit_minutes}min</span>}
+                    <Badge variant={passed ? 'default' : allLessonsDone ? 'outline' : 'secondary'} className="text-[10px]">
+                        {passed ? 'Passed' : allLessonsDone ? 'Ready' : 'Locked'}
+                    </Badge>
+                </div>
+            </Link>
+        </div>
+    )
+}
+
+function CourseAssessmentEntry({
+    assessment,
+    status,
+    allModulesDone,
+}: {
+    assessment: any
+    status: any
+    allModulesDone: boolean
+}) {
+    const questionCount = assessment.questions?.[0]?.count || 0
+    const passed = status?.has_passed || false
+    const canAccess = allModulesDone && !passed
+
+    return (
+        <Link
+            href={canAccess ? `/assessments/${assessment.id}` : '#'}
+            className={`flex items-center gap-3 py-2 px-2 rounded-md transition-colors group ${canAccess ? 'hover:bg-muted/50' : 'opacity-60 cursor-not-allowed'}`}
+            onClick={(e) => { if (!canAccess) e.preventDefault() }}
+        >
+            {passed ? (
+                <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />
+            ) : !allModulesDone ? (
+                <Lock className="w-4 h-4 text-muted-foreground shrink-0" />
+            ) : (
+                <ClipboardCheck className="w-4 h-4 text-primary shrink-0" />
+            )}
+            <span className={`flex-1 text-sm ${passed ? 'text-muted-foreground line-through' : ''}`}>
+                Final Course Assessment{passed ? ' (Passed)' : ''}
+            </span>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <span>{questionCount} questions</span>
+                {assessment.time_limit_minutes && <span>{assessment.time_limit_minutes}min</span>}
+                <Badge variant={passed ? 'default' : allModulesDone ? 'outline' : 'secondary'} className="text-[10px]">
+                    {passed ? 'Passed' : allModulesDone ? 'Ready' : 'Locked'}
+                </Badge>
+            </div>
+        </Link>
+    )
+}
+

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { CompleteLessonButton } from '../components/CompleteLessonButton'
-import { QuizPlayer } from '../components/QuizPlayer'
+import { AssessmentPlayer } from '../../assessment/components/AssessmentPlayer'
 import { ProjectSubmission } from '../components/ProjectSubmission'
 import { LessonContent } from '../components/LessonContent'
 import type { Metadata } from 'next'
@@ -24,7 +24,6 @@ export default async function LessonPage({
 
     if (!user) redirect('/login')
 
-    // Fetch lesson with module and course info
     const { data: lesson, error } = await supabase
         .from('lessons')
         .select(`
@@ -48,7 +47,6 @@ export default async function LessonPage({
         )
     }
 
-    // Fetch user progress for this lesson
     const { data: progress } = await supabase
         .from('user_progress')
         .select('*')
@@ -60,14 +58,13 @@ export default async function LessonPage({
     const courseTitle = (lesson.module as any)?.course?.title || 'Unknown Course'
     const moduleTitle = (lesson.module as any)?.title || 'Unknown Module'
 
-    // Fetch Quiz if it exists for this lesson
+    // Fetch quiz (lesson assessment)
     const { data: quiz } = await supabase
         .from('quizzes')
         .select('*, questions:quiz_questions(*)')
         .eq('lesson_id', id)
         .single()
 
-    // Fetch Project Submission if it exists
     const { data: projectSubmission } = await supabase
         .from('project_submissions')
         .select('*')
@@ -77,7 +74,6 @@ export default async function LessonPage({
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
-            {/* Breadcrumb */}
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Link href="/dashboard" className="hover:text-foreground flex items-center gap-1">
                     <ChevronLeft className="w-4 h-4" />
@@ -89,7 +85,6 @@ export default async function LessonPage({
                 <span className="truncate max-w-[150px]">{moduleTitle}</span>
             </div>
 
-            {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>
                     <h1 className="text-2xl font-bold">{lesson.title}</h1>
@@ -107,7 +102,6 @@ export default async function LessonPage({
                 </div>
             </div>
 
-            {/* Content area */}
             <Card className="border-border/40">
                 <CardContent className="p-6">
                     <LessonContent
@@ -117,21 +111,15 @@ export default async function LessonPage({
                 </CardContent>
             </Card>
 
-            {/* Progress, Quiz or Project */}
             {quiz ? (
                 <div id="quiz" className="space-y-4">
                     <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Lesson Assessment</h2>
-                    <QuizPlayer quiz={quiz} />
-                    {/* Still show mark as complete if not a project */}
-                    {!isCompleted && lesson.type !== 'project' && (
-                        <div className="flex justify-end pt-4">
-                            <CompleteLessonButton
-                                lessonId={lesson.id}
-                                xpReward={lesson.xp_reward}
-                                initialCompleted={isCompleted}
-                            />
-                        </div>
-                    )}
+                    <AssessmentPlayer
+                        assessment={quiz}
+                        onComplete={() => {
+                            // AssessmentPlayer handles lesson completion on pass via submitAssessment
+                        }}
+                    />
                 </div>
             ) : lesson.type === 'project' ? (
                 <div id="project" className="space-y-4">

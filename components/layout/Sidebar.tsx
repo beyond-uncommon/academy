@@ -8,12 +8,13 @@ import {
     BookOpen,
     User,
     Settings,
-    Zap,
     Trophy,
     LogOut,
     Shield,
     Users,
     BarChart2,
+    Briefcase,
+    ClipboardCheck,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -25,6 +26,8 @@ const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/courses', label: 'Courses', icon: BookOpen },
     { href: '/community', label: 'Community', icon: Users },
+    { href: '/career', label: 'Career', icon: Briefcase },
+    { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
     { href: '/profile', label: 'My Progress', icon: User },
     { href: '/settings', label: 'Settings', icon: Settings },
 ]
@@ -99,6 +102,18 @@ export function Sidebar({
                             >
                                 <BookOpen className="w-4 h-4 shrink-0" />
                                 Manage Content
+                            </Button>
+                        </Link>
+                        <Link href="/admin/assessments">
+                            <Button
+                                variant={pathname.startsWith('/admin/assessments') ? 'secondary' : 'ghost'}
+                                className={cn(
+                                    'w-full justify-start gap-3 text-sm font-medium',
+                                    pathname.startsWith('/admin/assessments') ? '' : 'text-muted-foreground hover:text-foreground'
+                                )}
+                            >
+                                <ClipboardCheck className="w-4 h-4 shrink-0" />
+                                Assessments
                             </Button>
                         </Link>
                         <Link href="/admin/submissions">

@@ -4,9 +4,10 @@ import { NextResponse, type NextRequest } from 'next/server'
 export async function middleware(request: NextRequest) {
     try {
         return await updateSession(request)
-    } catch (e: any) {
+    } catch (e) {
+        const message = e instanceof Error ? e.message : String(e)
         console.error('Middleware crash:', e)
-        return new NextResponse(`Middleware crashed: ${e.message || e.toString()}`, { status: 500 })
+        return new NextResponse(`Middleware crashed: ${message}`, { status: 500 })
     }
 }
 

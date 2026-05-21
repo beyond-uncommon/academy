@@ -1,0 +1,144 @@
+
+> academy-platform@0.1.0 lint
+> eslint
+
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/actions.ts
+  182:45  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/analytics/page.tsx
+   43:35  error  Error: Cannot call impure function during render
+
+`Date.now` is an impure function. Calling an impure function can produce unstable results that update unpredictably when the component happens to re-render. (https://react.dev/reference/rules/components-and-hooks-must-be-pure#components-and-hooks-must-be-idempotent).
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/analytics/page.tsx:43:35
+  41 |
+  42 |     // 2. Platform status (real data)
+> 43 |     const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+     |                                   ^^^^^^^^^^ Cannot call impure function
+  44 |
+  45 |     const [
+  46 |         { count: pendingSubmissions },  react-hooks/purity
+  102:56  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  102:85  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  184:94  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  186:94  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+  276:91  error  Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/lessons/components/CreateLessonDialog.tsx
+  13:60  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/lessons/page.tsx
+   3:29   warning  'CardHeader' is defined but never used    @typescript-eslint/no-unused-vars
+   3:41   warning  'CardTitle' is defined but never used     @typescript-eslint/no-unused-vars
+   6:10   warning  'Plus' is defined but never used          @typescript-eslint/no-unused-vars
+  61:115  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/admin/submissions/page.tsx
+   51:79  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   52:78  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   55:97  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  104:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  124:89  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/career/page.tsx
+  119:50   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  146:50   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  148:39   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  149:39   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  150:39   error  Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  214:23   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  214:46   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  214:51   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  214:62   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  222:47   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  222:54   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  234:19   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  234:129  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  237:19   error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  237:113  error  `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/community/page.tsx
+    3:52   warning  'CardDescription' is defined but never used                      @typescript-eslint/no-unused-vars
+   71:67   error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  149:81   error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  151:68   error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  156:112  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  176:77   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+  176:84   error    `"` can be escaped with `&quot;`, `&ldquo;`, `&#34;`, `&rdquo;`  react/no-unescaped-entities
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/courses/[slug]/page.tsx
+   63:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   63:66  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   65:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:41  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   66:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   69:50  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   72:44  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  117:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  118:82  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  119:61  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  138:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/courses/page.tsx
+  35:56  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/dashboard/page.tsx
+  214:59  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/leaderboard/page.tsx
+   3:29  warning  'CardHeader' is defined but never used    @typescript-eslint/no-unused-vars
+   3:41  warning  'CardTitle' is defined but never used     @typescript-eslint/no-unused-vars
+   4:10  warning  'Badge' is defined but never used         @typescript-eslint/no-unused-vars
+  37:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  37:71  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  48:71  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  49:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/lesson/[id]/page.tsx
+   60:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   61:43  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  142:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/lesson/actions.ts
+  64:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/lesson/components/LessonContent.tsx
+  19:42  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/lesson/project-actions.ts
+  20:14  warning  'e' is defined but never used             @typescript-eslint/no-unused-vars
+  74:21  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/quiz/actions.ts
+   39:36  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  128:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/(app)/settings/components/SettingsForm.tsx
+  44:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/app/api/streak-reminders/route.ts
+  6:28  warning  'request' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/components/layout/Sidebar.tsx
+  11:5  warning  'Zap' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/lib/email.ts
+  4:11  warning  'EmailResponse' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/lib/supabase/middleware.ts
+  31:11  warning  'isAuthRoute' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/public/sw.js
+  1:7  warning  'CACHE_NAME' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/beyondbechani/Documents/Projects/Academy platform/academy-platform/scripts/init_db.ts
+  17:7   warning  'supabase' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  25:15  warning  'schemaSql' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+✖ 80 problems (65 errors, 15 warnings)
+

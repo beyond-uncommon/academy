@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 
-export async function login(_prevState: any, formData: FormData) {
+export async function login(_prevState: unknown, formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
 
@@ -27,7 +27,7 @@ export async function login(_prevState: any, formData: FormData) {
     redirect('/dashboard')
 }
 
-export async function signup(_prevState: any, formData: FormData) {
+export async function signup(_prevState: unknown, formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const name = formData.get('name') as string
@@ -62,7 +62,7 @@ export async function logout() {
     redirect('/login')
 }
 
-export async function requestPasswordReset(_prevState: any, formData: FormData) {
+export async function requestPasswordReset(_prevState: unknown, formData: FormData) {
     const email = formData.get('email') as string
     if (!email) return { error: 'Email is required' }
 
@@ -78,7 +78,7 @@ export async function requestPasswordReset(_prevState: any, formData: FormData) 
     return { success: true, email }
 }
 
-export async function updatePassword(_prevState: any, formData: FormData) {
+export async function updatePassword(_prevState: unknown, formData: FormData) {
     const password = formData.get('password') as string
     const confirm = formData.get('confirm') as string
 

@@ -10,7 +10,12 @@ import { createLesson } from '../../actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 
-export function CreateLessonDialog({ modules }: { modules: any[] }) {
+interface ModuleItem {
+    id: string;
+    title: string;
+}
+
+export function CreateLessonDialog({ modules }: { modules: ModuleItem[] }) {
     const [open, setOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const router = useRouter()
@@ -20,17 +25,18 @@ export function CreateLessonDialog({ modules }: { modules: any[] }) {
         setIsLoading(true)
 
         const formData = new FormData(e.currentTarget)
+        const getVal = (key: string) => (formData.get(key) as string) || ''
         const data = {
-            title: formData.get('title'),
-            module_id: formData.get('module_id'),
-            type: formData.get('type'),
+            title: getVal('title'),
+            module_id: getVal('module_id'),
+            type: getVal('type') as 'video' | 'text' | 'interactive' | 'project',
             duration_minutes: Number(formData.get('duration_minutes')),
             xp_reward: Number(formData.get('xp_reward')),
-            order_index: 0, // Simplified for MVP
+            order_index: 0,
             content: {
-                description: formData.get('description'),
-                body: formData.get('body'),
-                video_url: formData.get('video_url')
+                description: getVal('description'),
+                body: getVal('body'),
+                video_url: getVal('video_url')
             },
             is_published: false
         }

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Progress } from '@/components/ui/progress'
 import { Zap, Flame, Trophy, Star } from 'lucide-react'
 import { RANK_LABELS, RANK_THRESHOLDS, Rank } from '@/types'
-import { getRank, xpToNextRank } from '@/lib/xp'
+import { xpToNextRank } from '@/lib/xp'
 import { CourseCertificate } from '@/components/profile/CourseCertificate'
 import type { Metadata } from 'next'
 
@@ -189,7 +189,7 @@ export default async function ProfilePage() {
                     <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Your Certification</h2>
                     <CourseCertificate
                         learnerName={fullName}
-                        courseTitle={(certificate.course as any)?.title || 'Explorer Path'}
+                        courseTitle={(certificate.course as { title: string } | null)?.title || 'Explorer Path'}
                         completionDate={new Date(certificate.issued_at).toLocaleDateString('en-US', {
                             month: 'long',
                             day: 'numeric',

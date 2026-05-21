@@ -11,6 +11,13 @@ create table public.profiles (
   avatar_url text,
   bio text,
   role text default 'learner' check (role in ('learner', 'admin')),
+  gender text,
+  age integer,
+  innovation_hub text,
+  onboarding_completed boolean default false,
+  skill_level text check (skill_level in ('beginner', 'intermediate', 'advanced')),
+  recommended_path text,
+  learning_goals text[],
   created_at timestamptz default now()
 );
 
@@ -76,15 +83,23 @@ create table public.lessons (
   created_at timestamptz default now()
 );
 
--- ─── Quizzes ──────────────────────────────────────────────────
+-- ─── Quizzes / Assessments ─────────────────────────────────────
+-- Supports lesson, module, course, and standalone assessment types
 create table public.quizzes (
   id uuid primary key default gen_random_uuid(),
   lesson_id uuid references public.lessons(id) on delete cascade,
   module_id uuid references public.modules(id) on delete cascade,
+  course_id uuid references public.courses(id) on delete cascade,
   title text not null,
+  type text not null default 'lesson' check (type in ('lesson', 'module', 'course', 'standalone')),
   xp_base integer default 100,
   xp_bonus_80 integer default 50,
   xp_bonus_100 integer default 100,
+  time_limit_minutes integer,       -- null = untimed
+  passing_score_pct integer default 80,
+  max_attempts integer default 0,   -- 0 = unlimited
+  instructions text,
+  is_published boolean default true,
   created_at timestamptz default now()
 );
 
@@ -114,7 +129,12 @@ create table public.user_quiz_attempts (
   quiz_id uuid references public.quizzes(id) on delete cascade,
   score_pct integer,
   xp_earned integer,
-  completed_at timestamptz default now()
+  started_at timestamptz,
+  completed_at timestamptz default now(),
+  time_spent_seconds integer,
+  answers jsonb,                      -- user's actual answers for review
+  passed boolean,
+  attempt_number integer default 1
 );
 
 -- ─── XP Ledger ───────────────────────────────────────────────
@@ -203,6 +223,41 @@ create table public.project_submissions (
   submitted_at timestamptz default now()
 );
 
+-- ─── Skill Assessment Questions ───────────────────────────────
+create table public.skill_assessment_questions (
+  id uuid primary key default gen_random_uuid(),
+  question text not null,
+  category text not null,
+  options jsonb not null,
+  correct_answer integer not null,
+  skill_weight integer default 1,
+  order_index integer not null
+);
+
+-- Seed skill assessment questions
+insert into public.skill_assessment_questions (question, category, options, correct_answer, skill_weight, order_index) values
+('How familiar are you with Figma?', 'tools', '[{"text": "Never heard of it", "score": 0}, {"text": "Seen it but never used", "score": 1}, {"text": "Can do basic layouts", "score": 2}, {"text": "Comfortable with components & auto-layout", "score": 3}, {"text": "Advanced: variables, prototyping, teams", "score": 4}]', 0, 2, 1),
+('Have you ever designed a user interface?', 'experience', '[{"text": "No, never", "score": 0}, {"text": "A few simple sketches", "score": 1}, {"text": "Digital designs for personal projects", "score": 2}, {"text": "Designed for work or clients", "score": 3}, {"text": "Professional UI designer", "score": 4}]', 0, 2, 2),
+('What is a user persona?', 'knowledge', '[{"text": "No idea", "score": 0}, {"text": "Heard the term but cant explain", "score": 1}, {"text": "Know its a fictional user representation", "score": 2}, {"text": "Can create and use personas in projects", "score": 3}, {"text": "Expert: can teach others", "score": 4}]', 0, 1, 3),
+('Have you conducted user research?', 'research', '[{"text": "No", "score": 0}, {"text": "Informal conversations with friends", "score": 1}, {"text": "Conducted 1-2 user interviews", "score": 2}, {"text": "Regularly run usability tests", "score": 3}, {"text": "Expert in research methods", "score": 4}]', 0, 1, 4),
+('How do you approach design problems?', 'process', '[{"text": "Just start designing", "score": 0}, {"text": "Look at what others have done", "score": 1}, {"text": "Follow a basic process (sketch, design, test)", "score": 2}, {"text": "Use research and iteration", "score": 3}, {"text": "Full design thinking process", "score": 4}]', 0, 1, 5);
+
+-- Learning goals (for onboarding)
+create table public.learning_goals (
+  id text primary key,
+  label text not null,
+  description text,
+  icon text,
+  target_courses text[]
+);
+
+insert into public.learning_goals (id, label, description, icon, target_courses) values
+('ui_fundamentals', 'Master UI Basics', 'Learn core principles of visual design', 'palette', '["crash-course"]'),
+('figma_pro', 'Become Figma Pro', 'Master Figma from basics to advanced', 'pen-tool', '["crash-course", "specialization-1"]'),
+('ux_research', 'UX Research Skills', 'Learn user research and testing', 'search', '["specialization-1"]'),
+('portfolio_ready', 'Build Portfolio', 'Create case studies for job applications', 'briefcase', '["crash-course", "specialization-1"]'),
+('freelance', 'Freelance Ready', 'Learn to find and retain clients', 'dollar-sign', '["specialization-2"]');
+
 -- =============================================================
 -- Row Level Security (RLS)
 -- =============================================================
@@ -255,3 +310,89 @@ create policy "badges_public_read" on public.badges
 alter table public.skill_tree_nodes enable row level security;
 create policy "nodes_public_read" on public.skill_tree_nodes
   for select using (true);
+
+-- ─── Assessment RLS ──────────────────────────────────────────
+alter table public.quizzes enable row level security;
+create policy "quizzes_published_read" on public.quizzes
+  for select using (
+    is_published = true
+    or auth.uid() in (select id from public.profiles where role = 'admin')
+  );
+
+alter table public.quiz_questions enable row level security;
+create policy "quiz_questions_published_read" on public.quiz_questions
+  for select using (
+    exists (
+      select 1 from public.quizzes
+      where quizzes.id = quiz_questions.quiz_id
+      and (quizzes.is_published = true
+        or auth.uid() in (select id from public.profiles where role = 'admin'))
+    )
+  );
+
+alter table public.user_quiz_attempts enable row level security;
+create policy "user_quiz_attempts_self" on public.user_quiz_attempts
+  for all using (auth.uid() = user_id);
+
+create policy "user_quiz_attempts_admin_read" on public.user_quiz_attempts
+  for select using (
+    auth.uid() in (select id from public.profiles where role = 'admin')
+  );
+
+-- ─── Assessment helper functions ─────────────────────────────
+create or replace function public.get_assessment_status(p_user_id uuid, p_quiz_id uuid)
+returns table (
+  attempt_count bigint,
+  best_score integer,
+  has_passed boolean,
+  last_attempt_id uuid
+) language plpgsql security definer as $$
+begin
+  return query
+  select
+    count(*)::bigint as attempt_count,
+    coalesce(max(ua.score_pct), 0) as best_score,
+    bool_or(coalesce(ua.passed, false)) as has_passed,
+    (select ua2.id from public.user_quiz_attempts ua2
+     where ua2.user_id = p_user_id and ua2.quiz_id = p_quiz_id
+     order by ua2.completed_at desc nulls last limit 1) as last_attempt_id
+  from public.user_quiz_attempts ua
+  where ua.user_id = p_user_id and ua.quiz_id = p_quiz_id;
+end;
+$$;
+
+create or replace function public.can_retake_assessment(p_user_id uuid, p_quiz_id uuid)
+returns table (
+  can_retake boolean,
+  attempts_used bigint,
+  max_attempts integer,
+  has_passed boolean
+) language plpgsql security definer as $$
+declare
+  v_max_attempts integer;
+  v_passed boolean;
+begin
+  select q.max_attempts into v_max_attempts
+  from public.quizzes q where q.id = p_quiz_id;
+
+  select bool_or(coalesce(ua.passed, false)) into v_passed
+  from public.user_quiz_attempts ua
+  where ua.user_id = p_user_id and ua.quiz_id = p_quiz_id;
+
+  return query
+  select
+    case
+      when coalesce(v_passed, false) then false
+      when v_max_attempts = 0 then true
+      else (
+        select count(*) < v_max_attempts
+        from public.user_quiz_attempts
+        where user_id = p_user_id and quiz_id = p_quiz_id
+      )
+    end as can_retake,
+    (select count(*)::bigint from public.user_quiz_attempts
+     where user_id = p_user_id and quiz_id = p_quiz_id) as attempts_used,
+    v_max_attempts as max_attempts,
+    coalesce(v_passed, false) as has_passed;
+end;
+$$;

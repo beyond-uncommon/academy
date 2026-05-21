@@ -44,5 +44,19 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    // If logged in, check onboarding status
+    if (user && !url.pathname.startsWith('/onboarding') && !url.pathname.startsWith('/auth')) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('onboarding_completed')
+            .eq('id', user.id)
+            .single()
+
+        if (profile && !profile.onboarding_completed) {
+            url.pathname = '/onboarding'
+            return NextResponse.redirect(url)
+        }
+    }
+
     return supabaseResponse
 }

@@ -10,6 +10,8 @@ export type SkillNodeStatus = 'locked' | 'in_progress' | 'completed'
 
 export type BadgeRarity = 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary'
 
+export type AssessmentType = 'lesson' | 'module' | 'course' | 'standalone'
+
 export type Rank = 'beginner' | 'explorer' | 'practitioner' | 'designer' | 'master'
 
 // ─── Database types ───────────────────────────────────────────────────────────
@@ -21,6 +23,13 @@ export interface Profile {
   avatar_url: string | null
   bio: string | null
   role: UserRole
+  gender: string | null
+  age: number | null
+  innovation_hub: string | null
+  onboarding_completed: boolean
+  skill_level: 'beginner' | 'intermediate' | 'advanced' | null
+  recommended_path: string | null
+  learning_goals: string[] | null
   created_at: string
 }
 
@@ -63,10 +72,17 @@ export interface Quiz {
   id: string
   lesson_id: string | null
   module_id: string | null
+  course_id: string | null
   title: string
+  type: AssessmentType
   xp_base: number
   xp_bonus_80: number
   xp_bonus_100: number
+  time_limit_minutes: number | null
+  passing_score_pct: number
+  max_attempts: number
+  instructions: string | null
+  is_published: boolean
   created_at: string
 }
 
@@ -77,6 +93,34 @@ export interface QuizQuestion {
   options: Array<{ text: string; is_correct: boolean }>
   explanation: string | null
   order_index: number
+}
+
+export interface QuizAttempt {
+  id: string
+  user_id: string
+  quiz_id: string
+  score_pct: number | null
+  xp_earned: number | null
+  started_at: string | null
+  completed_at: string | null
+  time_spent_seconds: number | null
+  answers: Record<string, number> | null
+  passed: boolean | null
+  attempt_number: number
+}
+
+export interface AssessmentStatus {
+  attempt_count: number
+  best_score: number
+  has_passed: boolean
+  last_attempt_id: string | null
+}
+
+export interface CanRetakeResult {
+  can_retake: boolean
+  attempts_used: number
+  max_attempts: number
+  has_passed: boolean
 }
 
 export interface UserProgress {

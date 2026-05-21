@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Zap, Flame, Trophy, BookOpen, ArrowRight } from 'lucide-react'
+import { Zap, Flame, Trophy, BookOpen, ArrowRight, ClipboardCheck, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
@@ -16,7 +16,6 @@ export default async function DashboardPage() {
 
     if (!user) redirect('/login')
 
-    // Fetch all required data in parallel
     const [
         { data: xp },
         { data: streak },
@@ -35,11 +34,38 @@ export default async function DashboardPage() {
         supabase.from('user_badges').select('badge_id, badge:badges(name, icon_url)').eq('user_id', user.id).limit(3)
     ])
 
-    // Fetch all lessons to calculate module progress
     const { data: allLessons } = await supabase.from('lessons').select('id, module_id, title, xp_reward, duration_minutes')
 
-    // Map user progress to a set for quick lookup
     const completedLessonIds = new Set(userProgress?.filter(p => p.completed).map(p => p.lesson_id) || [])
+
+    // Fetch all module assessments and their statuses
+    const { data: moduleAssessments } = await supabase
+        .from('quizzes')
+        .select('id, module_id, title, time_limit_minutes, passing_score_pct, xp_base')
+        .eq('type', 'module')
+        .eq('is_published', true)
+
+    // Find first module that is fully completed but assessment not passed
+    let nextAssessment: any = null
+    if (moduleAssessments && nodes && allLessons) {
+        for (const node of nodes.sort((a: any, b: any) => (a.position_x || 0) - (b.position_x || 0))) {
+            const moduleLessons = allLessons.filter(l => l.module_id === node.module_id)
+            if (moduleLessons.length === 0) continue
+            const allDone = moduleLessons.every(l => completedLessonIds.has(l.id))
+            if (!allDone) break // Stop at first incomplete module
+
+            const assessment = moduleAssessments.find((a: any) => a.module_id === node.module_id)
+            if (assessment) {
+                const { data: statusData } = await supabase
+                    .rpc('get_assessment_status', { p_user_id: user.id, p_quiz_id: assessment.id })
+                const status = Array.isArray(statusData) ? statusData[0] : statusData
+                if (!status?.has_passed) {
+                    nextAssessment = { ...assessment, moduleLabel: node.label }
+                    break
+                }
+            }
+        }
+    }
 
     // Process nodes with real progress
     const skillNodes = (nodes || []).map(node => {
@@ -49,17 +75,15 @@ export default async function DashboardPage() {
 
         const progressPct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
 
-        // Logical status determination
         let status = 'locked'
         if (progressPct === 100) {
             status = 'completed'
         } else if (progressPct > 0) {
             status = 'in_progress'
         } else {
-            // Check prerequisites
             const prereq = node.prerequisite_node_id ? nodes?.find(n => n.id === node.prerequisite_node_id) : null
             if (!prereq) {
-                status = 'in_progress' // First node is always available
+                status = 'in_progress'
             } else {
                 const prereqLessons = allLessons?.filter(l => l.module_id === prereq.module_id) || []
                 const prereqCompleted = prereqLessons.length > 0 && prereqLessons.every(l => completedLessonIds.has(l.id))
@@ -67,14 +91,9 @@ export default async function DashboardPage() {
             }
         }
 
-        return {
-            ...node,
-            status,
-            progress_pct: progressPct
-        }
+        return { ...node, status, progress_pct: progressPct }
     })
 
-    // Find next lesson to continue
     const nextLesson = allLessons?.find(l => !completedLessonIds.has(l.id))
     const nextLessonModule = nodes?.find(n => n.module_id === nextLesson?.module_id)
 
@@ -172,7 +191,27 @@ export default async function DashboardPage() {
                 {/* Continue learning */}
                 <div className="space-y-4">
                     <h2 className="text-lg font-semibold">Continue Learning</h2>
-                    {nextLesson ? (
+                    {nextAssessment ? (
+                        <Card className="border-border/40 ring-1 ring-yellow-500/30 bg-yellow-500/5">
+                            <CardHeader className="pb-2">
+                                <div className="flex items-center gap-2">
+                                    <ClipboardCheck className="w-4 h-4 text-yellow-500" />
+                                    <CardTitle className="text-sm">Module Assessment Ready</CardTitle>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="space-y-3">
+                                <p className="text-xs text-muted-foreground">
+                                    {nextAssessment.moduleLabel} · {nextAssessment.time_limit_minutes || 'No'} min limit · Pass: {nextAssessment.passing_score_pct || 80}%
+                                </p>
+                                <Progress value={0} className="h-1.5" />
+                                <Link href={`/assessments/${nextAssessment.id}`}>
+                                    <Button size="sm" className="w-full gap-2 mt-1 shadow-sm">
+                                        Take assessment <ArrowRight className="w-3 h-3" />
+                                    </Button>
+                                </Link>
+                            </CardContent>
+                        </Card>
+                    ) : nextLesson ? (
                         <Card className="border-border/40 ring-1 ring-primary/20">
                             <CardHeader className="pb-2">
                                 <CardTitle className="text-sm">{nextLessonModule?.label || 'Next Module'}</CardTitle>
@@ -193,8 +232,8 @@ export default async function DashboardPage() {
                         <Card className="border-border/40 bg-secondary/5">
                             <CardContent className="p-6 text-center">
                                 <Trophy className="w-8 h-8 text-yellow-500 mx-auto mb-2" />
-                                <p className="text-sm font-medium">All lessons completed!</p>
-                                <p className="text-xs text-muted-foreground mt-1">Check back soon for more content.</p>
+                                <p className="text-sm font-medium">All content completed!</p>
+                                <p className="text-xs text-muted-foreground mt-1">Check back soon for more.</p>
                             </CardContent>
                         </Card>
                     )}

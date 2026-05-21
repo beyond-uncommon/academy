@@ -52,7 +52,26 @@ export async function checkGraduation(userId: string, courseId: string) {
 
     if (!areAllProjectsApproved) return { graduated: false, message: 'All lessons done! Waiting for final project approval.' }
 
-    // 5. GRADUATE!
+    // 5. Check if course assessment has been passed (if one exists)
+    const { data: courseAssessment } = await supabase
+        .from('quizzes')
+        .select('id')
+        .eq('course_id', courseId)
+        .eq('type', 'course')
+        .eq('is_published', true)
+        .maybeSingle()
+
+    if (courseAssessment) {
+        const { data: assessmentStatus } = await supabase
+            .rpc('get_assessment_status', { p_user_id: userId, p_quiz_id: courseAssessment.id })
+
+        const status = Array.isArray(assessmentStatus) ? assessmentStatus[0] : assessmentStatus
+        if (!status?.has_passed) {
+            return { graduated: false, message: 'All lessons and projects done! Pass the course assessment to earn your certificate.' }
+        }
+    }
+
+    // 6. GRADUATE!
     // Fetch real XP and rank for certificate metadata
     const { data: userXP } = await supabase
         .from('user_xp')

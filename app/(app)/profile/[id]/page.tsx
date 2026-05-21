@@ -3,10 +3,8 @@ import { redirect, notFound } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Progress } from '@/components/ui/progress'
-import { Zap, Flame, Trophy, Star, ChevronLeft, Link2, ExternalLink } from 'lucide-react'
-import { RANK_LABELS, RANK_THRESHOLDS, Rank } from '@/types'
-import { xpToNextRank } from '@/lib/xp'
+import { Zap, Flame, Trophy, Star, ChevronLeft, ExternalLink } from 'lucide-react'
+import { RANK_LABELS, Rank } from '@/types'
 import Link from 'next/link'
 
 export default async function PublicProfilePage({
@@ -62,7 +60,6 @@ export default async function PublicProfilePage({
 
     const totalXP = xp?.total_xp || 0
     const rankKey = (xp?.rank || 'beginner') as Rank
-    const nextRankData = xpToNextRank(totalXP)
 
     const fullName = profile.full_name || 'Learner'
     const initials = fullName.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'L'
@@ -157,7 +154,7 @@ export default async function PublicProfilePage({
                         {(!projects || projects.length === 0) ? (
                             <Card className="border-border/40 border-dashed bg-transparent h-40 flex items-center justify-center italic">
                                 <p className="text-xs text-muted-foreground text-center px-6">
-                                    This learner hasn't showcased any projects yet.
+                                    This learner hasn&apos;t showcased any projects yet.
                                 </p>
                             </Card>
                         ) : (

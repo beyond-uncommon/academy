@@ -7,7 +7,7 @@ import { checkGraduation } from '@/lib/graduation'
 /**
  * Creates a new admin user. Only callable by existing admins.
  */
-export async function createAdminUser(_prevState: any, formData: FormData) {
+export async function createAdminUser(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Not authenticated' }
@@ -90,7 +90,18 @@ export async function toggleLessonStatus(lessonId: string, isPublished: boolean)
 /**
  * Creates a new lesson.
  */
-export async function createLesson(formData: any) {
+interface CreateLessonInput {
+    title: string
+    module_id: string
+    order_index: number
+    type: 'video' | 'text' | 'interactive' | 'project'
+    duration_minutes: number
+    xp_reward: number
+    content: unknown
+    is_published?: boolean
+}
+
+export async function createLesson(formData: CreateLessonInput) {
     const supabase = await createClient()
 
     // Auth check
@@ -168,7 +179,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
                 .eq('id', submission.lesson_id)
                 .single()
 
-            const courseId = (lessonData as any)?.module?.course_id
+            const courseId = (lessonData as { module: { course_id: string } | null } | null)?.module?.course_id
             if (courseId) {
                 await checkGraduation(submission.user_id, courseId)
             }

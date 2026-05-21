@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard } from 'lucide-react'
+import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck } from 'lucide-react'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -13,7 +13,13 @@ const sections = [
         href: '/admin/lessons',
         icon: BookOpen,
         title: 'Lessons & Courses',
-        description: 'Upload lessons, quizzes, and project briefs.',
+        description: 'Upload lessons, course content, and project briefs.',
+    },
+    {
+        href: '/admin/assessments',
+        icon: ClipboardCheck,
+        title: 'Assessments',
+        description: 'Manage timed assessments with passing requirements.',
     },
     {
         href: '/admin/users',

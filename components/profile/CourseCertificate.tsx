@@ -1,6 +1,6 @@
 import React from 'react'
 import { Card } from '@/components/ui/card'
-import { Trophy, Award, Landmark, CheckCircle2 } from 'lucide-react'
+import { Award, Landmark, CheckCircle2 } from 'lucide-react'
 
 interface CourseCertificateProps {
     learnerName: string
@@ -61,8 +61,8 @@ export const CourseCertificate: React.FC<CourseCertificateProps> = ({
                 </div>
 
                 <p className="max-w-xl text-sm font-sans text-slate-500 leading-relaxed italic">
-                    "Demonstrating mastery in fundamental design principles, user research methodologies,
-                    and high-fidelity prototyping as part of the professional Explorer curriculum."
+                    &quot;Demonstrating mastery in fundamental design principles, user research methodologies,
+                    and high-fidelity prototyping as part of the professional Explorer curriculum.&quot;
                 </p>
             </div>
 

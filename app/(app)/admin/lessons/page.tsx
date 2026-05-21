@@ -1,9 +1,9 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff } from 'lucide-react'
 import { toggleLessonStatus } from '../actions'
 import { CreateLessonDialog } from './components/CreateLessonDialog'
 
@@ -58,7 +58,7 @@ export default async function AdminLessonsPage() {
                                 {lessons?.map((lesson) => (
                                     <tr key={lesson.id} className="border-b border-border/40 transition-colors hover:bg-muted/50">
                                         <td className="p-4 align-middle font-medium">{lesson.title}</td>
-                                        <td className="p-4 align-middle text-muted-foreground">{(lesson.module as any)?.title}</td>
+                                        <td className="p-4 align-middle text-muted-foreground">{(lesson.module as { title: string } | null)?.title}</td>
                                         <td className="p-4 align-middle">
                                             <Badge variant="secondary" className="capitalize">{lesson.type}</Badge>
                                         </td>
