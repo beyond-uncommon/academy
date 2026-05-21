@@ -10,6 +10,8 @@ import { AssessmentPlayer } from '../../assessment/components/AssessmentPlayer'
 import { ProjectSubmission } from '../components/ProjectSubmission'
 import { LessonContent } from '../components/LessonContent'
 import { SaveOfflineButton, OfflineBadge } from '@/components/SaveOffline'
+import { CommentsSection } from '@/components/comments/CommentsSection'
+import { getComments } from '@/components/comments/actions'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Lesson' }
@@ -155,6 +157,17 @@ export default async function LessonPage({
                     </CardContent>
                 </Card>
             )}
+
+            {/* Discussion */}
+            <Card className="border-border/40" id="discussion">
+                <CardContent className="p-6">
+                    <CommentsSection
+                        lessonId={id}
+                        initialComments={await getComments(id)}
+                        currentUserId={user.id}
+                    />
+                </CardContent>
+            </Card>
         </div>
     )
 }
