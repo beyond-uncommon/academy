@@ -53,6 +53,255 @@ export async function createAdminUser(_prevState: unknown, formData: FormData) {
     return { success: true, email }
 }
 
+// ─── Course Management ─────────────────────────────────────────
+
+export async function createCourse(_prevState: unknown, formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const title = formData.get('title') as string
+    const description = formData.get('description') as string
+    const type = formData.get('type') as string
+    const phase = Number(formData.get('phase'))
+
+    if (!title) return { error: 'Title is required' }
+
+    const slug = title
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '')
+
+    const { error } = await supabase.from('courses').insert({
+        title,
+        slug,
+        description,
+        type,
+        phase: phase || 1,
+        is_published: false,
+    })
+
+    if (error) return { error: error.message }
+    revalidatePath('/admin/courses')
+    return { success: true }
+}
+
+export async function updateCourse(courseId: string, data: Record<string, unknown>) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase.from('courses').update(data).eq('id', courseId)
+    if (error) throw error
+
+    revalidatePath('/admin/courses')
+    revalidatePath(`/admin/courses/${courseId}`)
+    return { success: true }
+}
+
+export async function toggleCoursePublish(courseId: string, isPublished: boolean) {
+    return updateCourse(courseId, { is_published: isPublished })
+}
+
+// ─── Module Management ─────────────────────────────────────────
+
+export async function createModule(_prevState: unknown, formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const title = formData.get('title') as string
+    const courseId = formData.get('course_id') as string
+    const skillNodeId = formData.get('skill_node_id') as string
+    const xpAvailable = Number(formData.get('xp_available'))
+
+    if (!title || !courseId) return { error: 'Title and course are required' }
+
+    // Get next order_index
+    const { data: last } = await supabase
+        .from('modules')
+        .select('order_index')
+        .eq('course_id', courseId)
+        .order('order_index', { ascending: false })
+        .limit(1)
+
+    const orderIndex = (last?.[0]?.order_index ?? 0) + 1
+
+    const { error } = await supabase.from('modules').insert({
+        course_id: courseId,
+        title,
+        order_index: orderIndex,
+        skill_node_id: skillNodeId || null,
+        xp_available: xpAvailable || 0,
+    })
+
+    if (error) return { error: error.message }
+    revalidatePath(`/admin/courses/${courseId}`)
+    return { success: true }
+}
+
+export async function deleteModule(moduleId: string, courseId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase.from('modules').delete().eq('id', moduleId)
+    if (error) throw error
+
+    revalidatePath(`/admin/courses/${courseId}`)
+    return { success: true }
+}
+
+// ─── Quiz / Assessment Management ───────────────────────────────
+
+export async function createQuiz(_prevState: unknown, formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const title = formData.get('title') as string
+    const type = formData.get('type') as string
+    const moduleId = formData.get('module_id') as string
+    const courseId = formData.get('course_id') as string
+    const xpBase = Number(formData.get('xp_base'))
+    const timeLimit = Number(formData.get('time_limit_minutes')) || null
+    const passingScore = Number(formData.get('passing_score_pct'))
+    const maxAttempts = Number(formData.get('max_attempts'))
+    const instructions = formData.get('instructions') as string
+
+    if (!title) return { error: 'Title is required' }
+
+    const { error } = await supabase.from('quizzes').insert({
+        title,
+        type: type || 'lesson',
+        module_id: moduleId || null,
+        course_id: courseId || null,
+        xp_base: xpBase || 100,
+        xp_bonus_80: 50,
+        xp_bonus_100: 100,
+        time_limit_minutes: timeLimit,
+        passing_score_pct: passingScore || 80,
+        max_attempts: maxAttempts || 0,
+        instructions: instructions || null,
+        is_published: false,
+    })
+
+    if (error) return { error: error.message }
+
+    const path = moduleId ? `/admin/courses/${courseId}` : '/admin/assessments'
+    revalidatePath(path)
+    return { success: true }
+}
+
+export async function addQuestion(quizId: string, question: string, options: { text: string; is_correct: boolean }[], explanation: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { data: last } = await supabase
+        .from('quiz_questions')
+        .select('order_index')
+        .eq('quiz_id', quizId)
+        .order('order_index', { ascending: false })
+        .limit(1)
+
+    const orderIndex = (last?.[0]?.order_index ?? 0) + 1
+
+    const { error } = await supabase.from('quiz_questions').insert({
+        quiz_id: quizId,
+        question,
+        options,
+        explanation: explanation || null,
+        order_index: orderIndex,
+    })
+
+    if (error) throw error
+
+    revalidatePath('/admin/courses/*')
+    revalidatePath('/admin/assessments')
+    return { success: true }
+}
+
+export async function deleteQuestion(questionId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase.from('quiz_questions').delete().eq('id', questionId)
+    if (error) throw error
+
+    return { success: true }
+}
+
+export async function toggleQuizPublish(quizId: string, isPublished: boolean) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase.from('quizzes').update({ is_published: isPublished }).eq('id', quizId)
+    if (error) throw error
+
+    revalidatePath('/admin/assessments')
+    revalidatePath('/admin/courses/*')
+    return { success: true }
+}
+
 /**
  * Toggles a lesson's publishing status.
  */
@@ -165,14 +414,23 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
 
     if (error) throw error
 
-    if (status === 'approved') {
-        const { data: submission } = await supabase
-            .from('project_submissions')
-            .select('user_id, lesson_id')
-            .eq('id', submissionId)
-            .single()
+    // Fetch submission details for notification
+    const { data: submission } = await supabase
+        .from('project_submissions')
+        .select('user_id, lesson_id')
+        .eq('id', submissionId)
+        .single()
 
-        if (submission) {
+    if (submission) {
+        if (status === 'approved') {
+            await supabase.rpc('create_notification', {
+                p_user_id: submission.user_id,
+                p_type: 'project_approved',
+                p_title: 'Project approved!',
+                p_body: feedback ? `Feedback: ${feedback}` : 'Great work! Your project has been approved.',
+                p_link: `/profile`,
+            })
+
             const { data: lessonData } = await supabase
                 .from('lessons')
                 .select('module:modules(course_id)')
@@ -183,6 +441,14 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
             if (courseId) {
                 await checkGraduation(submission.user_id, courseId)
             }
+        } else if (status === 'reviewed') {
+            await supabase.rpc('create_notification', {
+                p_user_id: submission.user_id,
+                p_type: 'project_reviewed',
+                p_title: 'Project reviewed',
+                p_body: feedback ? `Feedback: ${feedback}` : 'Your project has been reviewed. Check your profile.',
+                p_link: `/profile`,
+            })
         }
     }
 

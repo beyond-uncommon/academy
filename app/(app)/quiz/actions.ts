@@ -277,6 +277,25 @@ export async function submitAssessment(
             await supabase.rpc('award_xp', { p_user_id: user.id, p_xp: xpEarned })
         }
 
+        // Create notification
+        if (passed) {
+            await supabase.rpc('create_notification', {
+                p_user_id: user.id,
+                p_type: 'quiz_passed',
+                p_title: `${quiz.title} — Passed!`,
+                p_body: `Score: ${scorePct}% | ${xpEarned} XP earned`,
+                p_link: quiz.lesson_id ? `/lesson/${quiz.lesson_id}` : `/assessments/${quiz.id}`,
+            })
+        } else {
+            await supabase.rpc('create_notification', {
+                p_user_id: user.id,
+                p_type: 'quiz_failed',
+                p_title: `${quiz.title} — Needs improvement`,
+                p_body: `Score: ${scorePct}% (passing: ${quiz.passing_score_pct}%)`,
+                p_link: `/assessments/${quiz.id}`,
+            })
+        }
+
         // ─── Progression gating ─────────────────────────────
         if (passed) {
             const assessmentType = quiz.type as string
@@ -356,6 +375,13 @@ export async function submitAssessment(
                 await supabase.from('user_badges').insert({
                     user_id: user.id,
                     badge_id: 'quiz_ace'
+                })
+                await supabase.rpc('create_notification', {
+                    p_user_id: user.id,
+                    p_type: 'badge_earned',
+                    p_title: 'Badge earned: Quiz Ace',
+                    p_body: 'Perfect score on an assessment!',
+                    p_link: '/profile',
                 })
             }
         }

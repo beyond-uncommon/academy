@@ -3,15 +3,18 @@ import { Badge } from '@/components/ui/badge'
 import { RANK_LABELS, type Rank } from '@/types'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { NotificationBell } from '@/components/notifications/NotificationBell'
 
 interface TopBarProps {
     totalXP?: number
     streak?: number
     rank?: Rank
     isAdmin?: boolean
+    unreadNotifications?: number
+    notifications?: any[]
 }
 
-export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = false }: TopBarProps) {
+export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = false, unreadNotifications = 0, notifications = [] }: TopBarProps) {
     return (
         <header className="h-14 border-b border-border/40 bg-background/80 backdrop-blur-sm flex items-center justify-end px-6 gap-6 sticky top-0 z-40">
             {isAdmin && (
@@ -24,6 +27,10 @@ export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = f
                     </Link>
                 </div>
             )}
+
+            {/* Notifications */}
+            <NotificationBell initialUnread={unreadNotifications} initialNotifications={notifications} />
+
             {/* Streak */}
             <div className="flex items-center gap-1.5 text-sm font-medium">
                 <Flame className="w-4 h-4 text-orange-500" />

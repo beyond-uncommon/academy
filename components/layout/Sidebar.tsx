@@ -92,16 +92,16 @@ export function Sidebar({
                                 Admin Overview
                             </Button>
                         </Link>
-                        <Link href="/admin/lessons">
+                        <Link href="/admin/courses">
                             <Button
-                                variant={pathname.startsWith('/admin/lessons') ? 'secondary' : 'ghost'}
+                                variant={pathname.startsWith('/admin/courses') ? 'secondary' : 'ghost'}
                                 className={cn(
                                     'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/lessons') ? '' : 'text-muted-foreground hover:text-foreground'
+                                    pathname.startsWith('/admin/courses') ? '' : 'text-muted-foreground hover:text-foreground'
                                 )}
                             >
                                 <BookOpen className="w-4 h-4 shrink-0" />
-                                Manage Content
+                                Courses
                             </Button>
                         </Link>
                         <Link href="/admin/assessments">

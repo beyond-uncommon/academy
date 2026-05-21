@@ -10,10 +10,10 @@ export const metadata: Metadata = { title: 'Admin' }
 
 const sections = [
     {
-        href: '/admin/lessons',
+        href: '/admin/courses',
         icon: BookOpen,
-        title: 'Lessons & Courses',
-        description: 'Upload lessons, course content, and project briefs.',
+        title: 'Courses',
+        description: 'Create courses, modules, lessons, and quizzes.',
     },
     {
         href: '/admin/assessments',

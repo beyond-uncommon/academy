@@ -56,6 +56,15 @@ export async function completeLesson(lessonId: string, xpReward: number) {
 
         const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
 
+        // Create notification
+        await supabase.rpc('create_notification', {
+            p_user_id: user.id,
+            p_type: 'lesson_completed',
+            p_title: 'Lesson completed',
+            p_body: `You earned ${xpReward} XP`,
+            p_link: `/lesson/${lessonId}`,
+        })
+
         revalidatePath(`/lesson/${lessonId}`)
         revalidatePath('/dashboard')
         revalidatePath('/profile')

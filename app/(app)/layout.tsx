@@ -2,6 +2,7 @@ import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getNotifications, getUnreadCount } from '@/lib/notifications'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient()
@@ -32,6 +33,12 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         .eq('user_id', user.id)
         .single()
 
+    // Fetch Notifications
+    const [notifications, unreadCount] = await Promise.all([
+        getNotifications(user.id, 10),
+        getUnreadCount(user.id),
+    ])
+
     const username = profile?.full_name || 'Learner'
     const initials = username.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'L'
 
@@ -49,6 +56,8 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     streak={streak?.current_streak || 0}
                     rank={xp?.rank || 'beginner'}
                     isAdmin={profile?.role === 'admin'}
+                    unreadNotifications={unreadCount}
+                    notifications={notifications}
                 />
                 <main className="flex-1 p-6">{children}</main>
             </div>
