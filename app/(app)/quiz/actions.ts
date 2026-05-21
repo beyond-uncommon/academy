@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { calculateQuizXP } from '@/lib/xp'
 import { updateStreak } from '@/lib/gamification'
+import { logActivity } from '@/lib/log-activity'
 
 // ─── Legacy submit (kept for backward compat) ─────────────────
 
@@ -276,6 +277,13 @@ export async function submitAssessment(
         if (xpEarned > 0) {
             await supabase.rpc('award_xp', { p_user_id: user.id, p_xp: xpEarned })
         }
+
+        // Log activity
+        await logActivity(passed ? 'quiz_pass' : 'quiz_fail', {
+            quiz_id: quiz.id,
+            score_pct: scorePct,
+            xp_earned: xpEarned,
+        })
 
         // Create notification
         if (passed) {

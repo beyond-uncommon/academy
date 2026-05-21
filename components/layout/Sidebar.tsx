@@ -15,6 +15,7 @@ import {
     BarChart2,
     Briefcase,
     ClipboardCheck,
+    Activity,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -28,6 +29,7 @@ const navItems = [
     { href: '/community', label: 'Community', icon: Users },
     { href: '/career', label: 'Career', icon: Briefcase },
     { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
+    { href: '/analytics', label: 'Analytics', icon: Activity },
     { href: '/profile', label: 'My Progress', icon: User },
     { href: '/settings', label: 'Settings', icon: Settings },
 ]

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { updateStreak } from '@/lib/gamification'
+import { logActivity } from '@/lib/log-activity'
 
 export async function completeLesson(lessonId: string, xpReward: number) {
     const supabase = await createClient()
@@ -55,6 +56,9 @@ export async function completeLesson(lessonId: string, xpReward: number) {
             .single()
 
         const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
+
+        // Log activity
+        await logActivity('lesson_complete', { lesson_id: lessonId, xp_earned: xpReward })
 
         // Create notification
         await supabase.rpc('create_notification', {
