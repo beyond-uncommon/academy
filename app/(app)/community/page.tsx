@@ -1,11 +1,14 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Trophy, Flame, Zap, ExternalLink, MessageSquare, Heart, Link2 } from 'lucide-react'
+import { Trophy, Flame, Zap } from 'lucide-react'
 import Link from 'next/link'
+import { SubmissionCard } from '@/components/community/SubmissionCard'
+import { getLikeCount } from '@/components/comments/actions'
+import { getComments } from '@/components/comments/actions'
 
 export default async function CommunityPage() {
     const supabase = await createClient()
@@ -29,6 +32,17 @@ export default async function CommunityPage() {
             .order('submitted_at', { ascending: false })
             .limit(12),
     ])
+
+    // Fetch like counts and comments for each submission
+    const submissionsWithData = await Promise.all(
+        (showcase || []).map(async (item) => {
+            const [likeData, comments] = await Promise.all([
+                getLikeCount(item.id),
+                getComments({ submission_id: item.id }),
+            ])
+            return { ...item, ...likeData, comments }
+        })
+    )
 
     return (
         <div className="space-y-8">
@@ -56,67 +70,19 @@ export default async function CommunityPage() {
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {showcase?.map((item) => (
-                            <Card key={item.id} className="border-border/40 hover:border-border/80 transition-all group">
-                                <CardHeader className="p-4 pb-2">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <Link href={`/profile/${item.user_id}`} className="flex items-center gap-2 group/author">
-                                            <Avatar className="w-6 h-6 border group-hover/author:border-primary/50 transition-colors">
-                                                <AvatarImage src={item.profile?.avatar_url} />
-                                                <AvatarFallback className="text-[10px]">
-                                                    {item.profile?.full_name?.charAt(0) || 'U'}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                            <span className="text-xs font-medium truncate group-hover/author:text-primary transition-colors">
-                                                {(item.profile as any)?.full_name}
-                                            </span>
-                                        </Link>
-                                        <span className="text-[10px] text-muted-foreground ml-auto">
-                                            {new Date(item.submitted_at).toLocaleDateString()}
-                                        </span>
-                                    </div>
-                                    <CardTitle className="text-sm line-clamp-1 group-hover:text-primary transition-colors">
-                                        {item.lesson?.title}
-                                    </CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-4 pt-2 space-y-3">
-                                    <div className="aspect-video bg-muted/50 rounded-md border border-border/40 flex items-center justify-center relative overflow-hidden">
-                                        {/* In a real app, this would be a screenshot or cover image */}
-                                        <Link2 className="w-8 h-8 text-muted-foreground/30" />
-                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
-                                            <a
-                                                href={item.submission_url}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="bg-background/90 text-foreground text-xs px-3 py-1.5 rounded-full border shadow-sm flex items-center gap-1.5"
-                                            >
-                                                View Project <ExternalLink className="w-3 h-3" />
-                                            </a>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center justify-between pt-1">
-                                        <div className="flex items-center gap-3">
-                                            <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-red-500 transition-colors">
-                                                <Heart className="w-3 h-3" />
-                                                <span>0</span>
-                                            </button>
-                                            <button className="flex items-center gap-1 text-[10px] text-muted-foreground hover:text-primary transition-colors">
-                                                <MessageSquare className="w-3 h-3" />
-                                                <span>0</span>
-                                            </button>
-                                        </div>
-                                        {item.status === 'approved' && (
-                                            <Badge variant="outline" className="text-[10px] bg-green-500/5 text-green-600 border-green-500/20 py-0 h-5">
-                                                Approved
-                                            </Badge>
-                                        )}
-                                    </div>
-                                </CardContent>
-                            </Card>
+                        {submissionsWithData.map((item) => (
+                            <SubmissionCard
+                                key={item.id}
+                                submission={item}
+                                initialLikes={item.count}
+                                initialLiked={item.liked}
+                                initialComments={item.comments}
+                                currentUserId={user.id}
+                            />
                         ))}
                     </div>
 
-                    {(!showcase || showcase.length === 0) && (
+                    {showcase?.length === 0 && (
                         <div className="text-center py-12 border border-dashed rounded-lg">
                             <p className="text-muted-foreground text-sm">No submissions yet. Be the first!</p>
                         </div>

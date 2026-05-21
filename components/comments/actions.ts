@@ -5,7 +5,8 @@ import { revalidatePath } from 'next/cache'
 
 export interface Comment {
   id: string
-  lesson_id: string
+  lesson_id?: string | null
+  submission_id?: string | null
   user_id: string
   parent_id: string | null
   content: string
@@ -17,8 +18,11 @@ export interface Comment {
   replies?: Comment[]
 }
 
-export async function getComments(lessonId: string): Promise<Comment[]> {
+export async function getComments(target: { lesson_id?: string; submission_id?: string }): Promise<Comment[]> {
   const supabase = await createClient()
+  const query: Record<string, string> = {}
+  if (target.lesson_id) query.lesson_id = target.lesson_id
+  if (target.submission_id) query.submission_id = target.submission_id
 
   const { data } = await supabase
     .from('lesson_comments')
@@ -26,7 +30,7 @@ export async function getComments(lessonId: string): Promise<Comment[]> {
       *,
       author:profiles(full_name, avatar_url)
     `)
-    .eq('lesson_id', lessonId)
+    .match(query)
     .order('created_at', { ascending: true })
 
   if (!data) return []
@@ -40,53 +44,30 @@ export async function getComments(lessonId: string): Promise<Comment[]> {
   }))
 }
 
-export async function addComment(lessonId: string, content: string, parentId?: string) {
+export async function addComment(target: { lesson_id?: string; submission_id?: string }, content: string, parentId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
-
   if (!content.trim()) throw new Error('Comment cannot be empty')
 
-  const { error } = await supabase.from('lesson_comments').insert({
-    lesson_id: lessonId,
+  const payload: Record<string, unknown> = {
     user_id: user.id,
     parent_id: parentId || null,
     content: content.trim(),
-  })
+  }
+  if (target.lesson_id) payload.lesson_id = target.lesson_id
+  if (target.submission_id) payload.submission_id = target.submission_id
 
+  const { error } = await supabase.from('lesson_comments').insert(payload)
   if (error) throw error
 
-  revalidatePath(`/lesson/${lessonId}`)
-
-  // Notify lesson author if not self-comment
-  const { data: lesson } = await supabase
-    .from('lessons')
-    .select('module:modules(course_id)')
-    .eq('id', lessonId)
-    .single()
-
-  if (lesson && parentId) {
-    const { data: parentComment } = await supabase
-      .from('lesson_comments')
-      .select('user_id')
-      .eq('id', parentId)
-      .single()
-
-    if (parentComment && parentComment.user_id !== user.id) {
-      await supabase.rpc('create_notification', {
-        p_user_id: parentComment.user_id,
-        p_type: 'peer_feedback',
-        p_title: 'New reply to your comment',
-        p_body: content.trim().slice(0, 120),
-        p_link: `/lesson/${lessonId}`,
-      })
-    }
-  }
+  if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
+  if (target.submission_id) revalidatePath('/community')
 
   return { success: true }
 }
 
-export async function deleteComment(commentId: string, lessonId: string) {
+export async function deleteComment(commentId: string, target: { lesson_id?: string; submission_id?: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
@@ -99,6 +80,51 @@ export async function deleteComment(commentId: string, lessonId: string) {
 
   if (error) throw error
 
-  revalidatePath(`/lesson/${lessonId}`)
+  if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
+  if (target.submission_id) revalidatePath('/community')
   return { success: true }
+}
+
+// ─── Likes ─────────────────────────────────────────────────────
+
+export async function toggleLike(submissionId: string) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return { liked: false, count: 0 }
+
+  // Check if already liked
+  const { data: existing } = await supabase
+    .from('project_likes')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('submission_id', submissionId)
+    .single()
+
+  if (existing) {
+    await supabase.from('project_likes').delete().eq('user_id', user.id).eq('submission_id', submissionId)
+  } else {
+    await supabase.from('project_likes').insert({ user_id: user.id, submission_id: submissionId })
+  }
+
+  const { count } = await supabase
+    .from('project_likes')
+    .select('*', { count: 'exact', head: true })
+    .eq('submission_id', submissionId)
+
+  revalidatePath('/community')
+  return { liked: !existing, count: count || 0 }
+}
+
+export async function getLikeCount(submissionId: string): Promise<{ count: number; liked: boolean }> {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  const [{ count }, { data: userLike }] = await Promise.all([
+    supabase.from('project_likes').select('*', { count: 'exact', head: true }).eq('submission_id', submissionId),
+    user
+      ? supabase.from('project_likes').select('*').eq('user_id', user.id).eq('submission_id', submissionId).single()
+      : Promise.resolve({ data: null }),
+  ])
+
+  return { count: count || 0, liked: !!userLike }
 }

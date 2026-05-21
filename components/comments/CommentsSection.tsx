@@ -34,11 +34,11 @@ function CommentThread({
   const [deleting, setDeleting] = useState(false)
   const router = useRouter()
 
-  async function handleReply() {
+    async function handleReply() {
     if (!replyText.trim()) return
     setSubmitting(true)
     try {
-      await addComment(lessonId, replyText, comment.id)
+      await addComment({ lesson_id: lessonId }, replyText, comment.id)
       setReplyText('')
       setShowReply(false)
       router.refresh()
@@ -51,7 +51,7 @@ function CommentThread({
   async function handleDelete() {
     setDeleting(true)
     try {
-      await deleteComment(comment.id, lessonId)
+      await deleteComment(comment.id, { lesson_id: lessonId })
       router.refresh()
     } catch {
       toast.error('Failed to delete comment')
@@ -141,11 +141,11 @@ export function CommentsSection({
   const [submitting, setSubmitting] = useState(false)
   const router = useRouter()
 
-  async function handleSubmit() {
+    async function handleSubmit() {
     if (!newComment.trim()) return
     setSubmitting(true)
     try {
-      await addComment(lessonId, newComment)
+      await addComment({ lesson_id: lessonId }, newComment)
       setNewComment('')
       router.refresh()
     } catch {

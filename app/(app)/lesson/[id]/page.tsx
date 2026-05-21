@@ -163,7 +163,7 @@ export default async function LessonPage({
                 <CardContent className="p-6">
                     <CommentsSection
                         lessonId={id}
-                        initialComments={await getComments(id)}
+                        initialComments={await getComments({ lesson_id: id })}
                         currentUserId={user.id}
                     />
                 </CardContent>
