@@ -22,21 +22,22 @@ function SubmitButton() {
 
 function AcceptInviteForm() {
     const searchParams = useSearchParams()
-    const email = searchParams.get('email') || ''
+    const code = searchParams.get('code') || ''
+    const sig = searchParams.get('s') || ''
     const [state, formAction] = useActionState(completeInstructorSetup, null) as any
 
     useEffect(() => {
         if (state?.error) toast.error(state.error)
     }, [state])
 
-    if (!email) {
+    if (!code || !sig) {
         return (
             <div className="flex items-center justify-center min-h-screen p-4">
                 <Card className="w-full max-w-md">
                     <CardHeader>
                         <CardTitle>Invalid Link</CardTitle>
                         <CardDescription>
-                            This invite link is missing the email address. Please contact your admin for a new one.
+                            This invite link is missing the invite code. Please contact your admin for a new one.
                         </CardDescription>
                     </CardHeader>
                 </Card>
@@ -48,17 +49,18 @@ function AcceptInviteForm() {
         <div className="flex items-center justify-center min-h-screen p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>Complete Your Account</CardTitle>
+                    <CardTitle>Join as Instructor</CardTitle>
                     <CardDescription>
-                        You&apos;ve been invited as an instructor. Set your name and password to get started.
+                        You&apos;ve been invited to join as an instructor. Fill in your details to get started.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
                     <form action={formAction} className="space-y-4">
-                        <input type="hidden" name="email" value={email} />
+                        <input type="hidden" name="code" value={code} />
+                        <input type="hidden" name="s" value={sig} />
                         <div className="space-y-2">
-                            <Label htmlFor="email_display">Email</Label>
-                            <Input id="email_display" value={email} disabled className="text-muted-foreground" />
+                            <Label htmlFor="email">Email Address</Label>
+                            <Input id="email" name="email" type="email" placeholder="you@example.com" required autoComplete="email" />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="name">Full Name</Label>

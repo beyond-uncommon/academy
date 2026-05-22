@@ -15,7 +15,7 @@ import {
     DialogDescription,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { Mail, Loader2, UserPlus, CheckCircle2, Copy } from 'lucide-react'
+import { Link2, Loader2, UserPlus, CheckCircle2, Copy } from 'lucide-react'
 import { inviteInstructor } from '../actions'
 import { useRouter } from 'next/navigation'
 
@@ -23,7 +23,7 @@ function SubmitButton() {
     const { pending } = useFormStatus()
     return (
         <Button type="submit" className="w-full gap-2" disabled={pending}>
-            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Link2 className="w-4 h-4" />}
             {pending ? 'Generating link...' : 'Generate Invite Link'}
         </Button>
     )
@@ -65,8 +65,7 @@ export function InviteInstructorDialog() {
                             <div>
                                 <DialogTitle className="text-lg">Invite Link Generated</DialogTitle>
                                 <p className="text-sm text-muted-foreground mt-1">
-                                    Share this link with <span className="font-medium text-foreground">{state.email}</span>.
-                                    They&apos;ll set their name and password.
+                                    Share this link with your instructor. They&apos;ll set their email, name, and password.
                                 </p>
                             </div>
                         </div>
@@ -88,14 +87,10 @@ export function InviteInstructorDialog() {
                         <DialogHeader>
                             <DialogTitle>Invite an Instructor</DialogTitle>
                             <DialogDescription>
-                                Enter their email to generate a sign-up link. They&apos;ll set their own name and password.
+                                Generate a one-time invite link to share with your instructor.
                             </DialogDescription>
                         </DialogHeader>
                         <form action={formAction} className="space-y-4 pt-2">
-                            <div className="space-y-2">
-                                <Label htmlFor="email">Email Address</Label>
-                                <Input id="email" name="email" type="email" placeholder="instructor@example.com" required />
-                            </div>
                             <SubmitButton />
                         </form>
                     </>

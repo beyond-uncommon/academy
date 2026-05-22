@@ -8,6 +8,21 @@ function isStaff(role?: string | null) {
     return role === 'admin' || role === 'instructor'
 }
 
+/** Signs an invite code with HMAC-SHA256 so it can be verified without DB storage. */
+const INVITE_SECRET = process.env.INVITE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-invite-secret'
+
+async function signInviteCode(code: string): Promise<string> {
+    const enc = new TextEncoder()
+    const key = await crypto.subtle.importKey('raw', enc.encode(INVITE_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
+    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(code))
+    return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
+}
+
+async function verifyInviteCode(code: string, sig: string): Promise<boolean> {
+    const expected = await signInviteCode(code)
+    return sig === expected
+}
+
 /**
  * Creates a new admin user. Only callable by existing admins.
  */
@@ -105,9 +120,9 @@ export async function inviteStudent(_prevState: unknown, formData: FormData) {
 }
 
 /**
- * Invites a new instructor. Only callable by admins.
- * Creates the user and returns a sign-up link — no email sent, admin shares the link manually.
- * The link takes the instructor to a signup form where they set name + password.
+ * Generates an instructor invite link (no email, no DB storage).
+ * Uses a signed token (HMAC) so the server can verify it at claim time.
+ * Admin shares the link; the instructor fills in their email + name + password.
  */
 export async function inviteInstructor(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
@@ -122,32 +137,15 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
 
     if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-    const email = formData.get('email') as string
-    if (!email) return { error: 'Email is required' }
-
-    const admin = createAdminClient()
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    // Create user with random temp password (email confirmed so they exist)
-    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-        email,
-        password: crypto.randomUUID(),
-        email_confirm: true,
-    })
+    const code = crypto.randomUUID()
+    const sig = await signInviteCode(code)
 
-    if (createError) return { error: createError.message }
-    if (!newUser?.user?.id) return { error: 'Failed to create user' }
-
-    // Pre-create profile row with instructor role
-    await admin.from('profiles').upsert({
-        id: newUser.user.id,
-        role: 'instructor',
-    }, { onConflict: 'id' })
-
-    const link = `${appUrl}/auth/accept-invite?email=${encodeURIComponent(email)}`
+    const link = `${appUrl}/auth/accept-invite?code=${code}&s=${sig}`
 
     revalidatePath('/admin/users')
-    return { success: true, link, email }
+    return { success: true, link }
 }
 
 // ─── Course Management ─────────────────────────────────────────
