@@ -105,8 +105,8 @@ export async function inviteStudent(_prevState: unknown, formData: FormData) {
 }
 
 /**
- * Invites a new instructor via email. Only callable by admins.
- * Instructor sets their own name and password when they accept the invite.
+ * Invites a new instructor. Only callable by admins.
+ * Generates a sign-up link (no email sent) — admin shares the link manually.
  */
 export async function inviteInstructor(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
@@ -125,27 +125,30 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
     if (!email) return { error: 'Email is required' }
 
     const admin = createAdminClient()
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    // Generate a signup link (creates user + returns magic link)
-    const tempPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!'
+    // Generate a magic link — no email sent, one-click login, instructor sets name + password on arrival
     const { data, error: linkError } = await admin.auth.admin.generateLink({
-        type: 'signup',
+        type: 'magiclink',
         email,
-        password: tempPassword,
+        options: {
+            redirectTo: `${appUrl}/auth/accept-invite`,
+        },
     })
 
     if (linkError) return { error: linkError.message }
 
+    const actionLink = data?.properties?.action_link
+    if (!actionLink || !data?.user?.id) return { error: 'Failed to generate invite link' }
+
     // Pre-create profile row with instructor role
-    if (data?.user?.id) {
-        await admin.from('profiles').upsert({
-            id: data.user.id,
-            role: 'instructor',
-        }, { onConflict: 'id' })
-    }
+    await admin.from('profiles').upsert({
+        id: data.user.id,
+        role: 'instructor',
+    }, { onConflict: 'id' })
 
     revalidatePath('/admin/users')
-    return { success: true, email, link: data?.properties?.action_link }
+    return { success: true, link: actionLink, email }
 }
 
 // ─── Course Management ─────────────────────────────────────────
