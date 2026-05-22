@@ -14,7 +14,7 @@ import {
     DialogTitle,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { UserPlus, Loader2 } from 'lucide-react'
+import { Mail, Loader2, UserPlus } from 'lucide-react'
 import { inviteInstructor } from '../actions'
 import { useRouter } from 'next/navigation'
 
@@ -22,8 +22,8 @@ function SubmitButton() {
     const { pending } = useFormStatus()
     return (
         <Button type="submit" className="w-full gap-2" disabled={pending}>
-            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <UserPlus className="w-4 h-4" />}
-            {pending ? 'Creating account...' : 'Invite Instructor'}
+            {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
+            {pending ? 'Sending invite...' : 'Send Invite'}
         </Button>
     )
 }
@@ -36,7 +36,7 @@ export function InviteInstructorDialog() {
     useEffect(() => {
         if (state?.error) toast.error(state.error)
         if (state?.success) {
-            toast.success('Instructor invited!')
+            toast.success(`Invite sent to ${state.email}`)
             setOpen(false)
             router.refresh()
         }
@@ -56,23 +56,11 @@ export function InviteInstructorDialog() {
                 </DialogHeader>
                 <form action={formAction} className="space-y-4 pt-4">
                     <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input id="name" name="name" placeholder="Instructor name" required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
+                        <Label htmlFor="email">Email Address</Label>
                         <Input id="email" name="email" type="email" placeholder="instructor@example.com" required />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Temporary Password</Label>
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="At least 8 characters"
-                            required
-                            minLength={8}
-                        />
+                        <p className="text-xs text-muted-foreground">
+                            They&apos;ll receive an invite email and can set their own name and password.
+                        </p>
                     </div>
                     <SubmitButton />
                 </form>

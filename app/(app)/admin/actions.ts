@@ -105,7 +105,8 @@ export async function inviteStudent(_prevState: unknown, formData: FormData) {
 }
 
 /**
- * Creates a new instructor. Only callable by admins.
+ * Invites a new instructor via email. Only callable by admins.
+ * Instructor sets their own name and password when they accept the invite.
  */
 export async function inviteInstructor(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
@@ -120,33 +121,23 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
 
     if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-    const name = formData.get('name') as string
     const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    if (!name || !email || !password) return { error: 'All fields are required' }
-    if (password.length < 8) return { error: 'Password must be at least 8 characters' }
+    if (!email) return { error: 'Email is required' }
 
     const admin = createAdminClient()
 
-    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: name },
-    })
+    // Send invite email via Supabase
+    const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email)
 
-    if (createError) return { error: createError.message }
+    if (inviteError) return { error: inviteError.message }
 
-    const { error: profileError } = await admin
-        .from('profiles')
-        .upsert({
-            id: newUser.user.id,
-            full_name: name,
+    // Pre-create the profile row with instructor role (it will be empty until they sign up)
+    if (data?.user?.id) {
+        await admin.from('profiles').upsert({
+            id: data.user.id,
             role: 'instructor',
         }, { onConflict: 'id' })
-
-    if (profileError) return { error: profileError.message }
+    }
 
     revalidatePath('/admin/users')
     return { success: true, email }
