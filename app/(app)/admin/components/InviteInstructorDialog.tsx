@@ -12,9 +12,10 @@ import {
     DialogContent,
     DialogHeader,
     DialogTitle,
+    DialogDescription,
     DialogTrigger,
 } from '@/components/ui/dialog'
-import { Mail, Loader2, UserPlus } from 'lucide-react'
+import { Mail, Loader2, UserPlus, CheckCircle2, Copy } from 'lucide-react'
 import { inviteInstructor } from '../actions'
 import { useRouter } from 'next/navigation'
 
@@ -23,7 +24,7 @@ function SubmitButton() {
     return (
         <Button type="submit" className="w-full gap-2" disabled={pending}>
             {pending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />}
-            {pending ? 'Sending invite...' : 'Send Invite'}
+            {pending ? 'Generating link...' : 'Generate Invite Link'}
         </Button>
     )
 }
@@ -32,38 +33,73 @@ export function InviteInstructorDialog() {
     const [open, setOpen] = useState(false)
     const [state, formAction] = useActionState(inviteInstructor, null) as any
     const router = useRouter()
+    const [copied, setCopied] = useState(false)
 
     useEffect(() => {
         if (state?.error) toast.error(state.error)
-        if (state?.success) {
-            toast.success(`Invite sent to ${state.email}`)
-            setOpen(false)
-            router.refresh()
+    }, [state])
+
+    function handleCopy() {
+        if (state?.link) {
+            navigator.clipboard.writeText(state.link)
+            setCopied(true)
+            setTimeout(() => setCopied(false), 2000)
         }
-    }, [state, router])
+    }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(o) => { setOpen(o); if (!o) router.refresh() }}>
             <DialogTrigger asChild>
                 <Button variant="outline" size="sm" className="gap-2 w-full">
                     <UserPlus className="w-4 h-4" />
                     Open
                 </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[450px]">
-                <DialogHeader>
-                    <DialogTitle>Invite an Instructor</DialogTitle>
-                </DialogHeader>
-                <form action={formAction} className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email Address</Label>
-                        <Input id="email" name="email" type="email" placeholder="instructor@example.com" required />
-                        <p className="text-xs text-muted-foreground">
-                            They&apos;ll receive an invite email and can set their own name and password.
-                        </p>
+            <DialogContent className="sm:max-w-[500px]">
+                {state?.success ? (
+                    <div className="py-6 space-y-6">
+                        <div className="flex flex-col items-center gap-3 text-center">
+                            <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">
+                                <CheckCircle2 className="w-6 h-6 text-green-500" />
+                            </div>
+                            <div>
+                                <DialogTitle className="text-lg">Invite Link Generated</DialogTitle>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                    Share this link with <span className="font-medium text-foreground">{state.email}</span>.
+                                    They&apos;ll set their name and password.
+                                </p>
+                            </div>
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Invite Link</Label>
+                            <div className="flex gap-2">
+                                <Input readOnly value={state.link} className="text-xs font-mono" />
+                                <Button variant="outline" size="icon" className="shrink-0" onClick={handleCopy}>
+                                    {copied ? <CheckCircle2 className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                                </Button>
+                            </div>
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={() => setOpen(false)}>
+                            Done
+                        </Button>
                     </div>
-                    <SubmitButton />
-                </form>
+                ) : (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>Invite an Instructor</DialogTitle>
+                            <DialogDescription>
+                                Enter their email to generate a sign-up link. They&apos;ll set their own name and password.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <form action={formAction} className="space-y-4 pt-2">
+                            <div className="space-y-2">
+                                <Label htmlFor="email">Email Address</Label>
+                                <Input id="email" name="email" type="email" placeholder="instructor@example.com" required />
+                            </div>
+                            <SubmitButton />
+                        </form>
+                    </>
+                )}
             </DialogContent>
         </Dialog>
     )

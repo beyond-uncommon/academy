@@ -126,12 +126,17 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
 
     const admin = createAdminClient()
 
-    // Send invite email via Supabase
-    const { data, error: inviteError } = await admin.auth.admin.inviteUserByEmail(email)
+    // Generate a signup link (creates user + returns magic link)
+    const tempPassword = crypto.randomUUID().slice(0, 16) + 'Aa1!'
+    const { data, error: linkError } = await admin.auth.admin.generateLink({
+        type: 'signup',
+        email,
+        password: tempPassword,
+    })
 
-    if (inviteError) return { error: inviteError.message }
+    if (linkError) return { error: linkError.message }
 
-    // Pre-create the profile row with instructor role (it will be empty until they sign up)
+    // Pre-create profile row with instructor role
     if (data?.user?.id) {
         await admin.from('profiles').upsert({
             id: data.user.id,
@@ -140,7 +145,7 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
     }
 
     revalidatePath('/admin/users')
-    return { success: true, email }
+    return { success: true, email, link: data?.properties?.action_link }
 }
 
 // ─── Course Management ─────────────────────────────────────────
