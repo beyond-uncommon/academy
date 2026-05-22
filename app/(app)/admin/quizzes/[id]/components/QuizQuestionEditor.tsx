@@ -20,13 +20,20 @@ interface Question {
     generated_by: string | null
 }
 
-export function QuizQuestionEditor({ quizId, questions: initial }: { quizId: string; questions: Question[] }) {
+interface ModuleInfo {
+    id: string
+    title: string
+    order_index: number
+}
+
+export function QuizQuestionEditor({ quizId, questions: initial, modules }: { quizId: string; questions: Question[]; modules: ModuleInfo[] }) {
     const [questions, setQuestions] = useState(initial)
     const [editQuestion, setEditQuestion] = useState<Question | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)
     const [isGenerating, setIsGenerating] = useState(false)
     const [filter, setFilter] = useState<'all' | 'published' | 'draft'>('all')
+    const [selectedModules, setSelectedModules] = useState<string[]>([])
     const router = useRouter()
 
     const filtered = questions.filter((q) => {
@@ -69,15 +76,23 @@ export function QuizQuestionEditor({ quizId, questions: initial }: { quizId: str
         }
     }
 
+    function toggleModule(id: string) {
+        setSelectedModules((prev) =>
+            prev.includes(id) ? prev.filter((m) => m !== id) : [...prev, id]
+        )
+    }
+
     async function handleGenerate() {
+        const moduleIds = selectedModules.length > 0 ? selectedModules : undefined
         setIsGenerating(true)
         try {
             const { generateQuizQuestions } = await import('../../../actions')
-            const res = await generateQuizQuestions(quizId, 5)
+            const res = await generateQuizQuestions(quizId, 5, moduleIds)
             if (res.error) {
                 toast.error(res.error)
             } else {
                 toast.success(`${res.count} questions generated as drafts`)
+                setSelectedModules([])
                 router.refresh()
             }
         } catch (e) {
@@ -149,6 +164,25 @@ export function QuizQuestionEditor({ quizId, questions: initial }: { quizId: str
                             <Eye className="w-4 h-4" />
                             Publish All Drafts
                         </Button>
+                    )}
+                    {modules.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            <span className="text-xs text-muted-foreground mr-1">Weeks:</span>
+                            {modules.map((m) => {
+                                const isSelected = selectedModules.includes(m.id)
+                                return (
+                                    <Button
+                                        key={m.id}
+                                        variant={isSelected ? 'secondary' : 'ghost'}
+                                        size="sm"
+                                        className="text-xs h-7 px-2"
+                                        onClick={() => toggleModule(m.id)}
+                                    >
+                                        {m.order_index}
+                                    </Button>
+                                )
+                            })}
+                        </div>
                     )}
                     <Button variant="outline" size="sm" className="gap-1" onClick={handleGenerate} disabled={isGenerating}>
                         {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}

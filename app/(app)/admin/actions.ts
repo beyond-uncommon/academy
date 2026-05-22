@@ -456,7 +456,7 @@ export async function toggleQuizPublish(quizId: string, isPublished: boolean) {
 
 // ─── AI Question Generation ─────────────────────────────────────
 
-export async function generateQuizQuestions(quizId: string, count = 5) {
+export async function generateQuizQuestions(quizId: string, count = 5, moduleIds?: string[]) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
@@ -468,23 +468,46 @@ export async function generateQuizQuestions(quizId: string, count = 5) {
         .single()
     if (profile?.role !== 'admin') throw new Error('Unauthorized')
 
-    // Fetch quiz with its context
+    // Fetch quiz and course info
     const { data: quiz } = await supabase
         .from('quizzes')
-        .select('*, course:courses(title, description), module:modules(title, lessons:lessons(title, content, type))')
+        .select('*, course:courses(title, description)')
         .eq('id', quizId)
         .single()
 
     if (!quiz) return { error: 'Quiz not found' }
 
-    // Build curriculum context
-    const lessons = quiz.module?.lessons || []
+    // Fetch lessons from selected modules (or fall back to quiz's own module)
+    let moduleTitles: string[] = []
+    let lessons: any[] = []
+
+    if (moduleIds && moduleIds.length > 0) {
+        const { data: modules } = await supabase
+            .from('modules')
+            .select('title, lessons:lessons(title, content, type)')
+            .in('id', moduleIds)
+
+        moduleTitles = (modules || []).map((m: any) => m.title)
+        lessons = (modules || []).flatMap((m: any) => m.lessons || [])
+    } else if (quiz.module_id) {
+        const { data: mod } = await supabase
+            .from('modules')
+            .select('title, lessons:lessons(title, content, type)')
+            .eq('id', quiz.module_id)
+            .single()
+
+        if (mod) {
+            moduleTitles = [mod.title]
+            lessons = mod.lessons || []
+        }
+    }
+
     const { buildCurriculumContext, generateQuestions } = await import('@/lib/ai/generate-questions')
 
     const context = buildCurriculumContext({
         courseTitle: quiz.course?.title,
         courseDescription: quiz.course?.description,
-        moduleTitle: quiz.module?.title,
+        moduleTitle: moduleTitles.join(', '),
         lessons: lessons.map((l: any) => ({
             title: l.title,
             contentNotes: l.content?.notes,

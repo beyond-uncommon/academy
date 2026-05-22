@@ -1,11 +1,10 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Sparkles } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { QuizQuestionEditor } from './components/QuizQuestionEditor'
-import { generateQuizQuestions } from '../../actions'
 
 export default async function QuizEditorPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -28,6 +27,13 @@ export default async function QuizEditorPage({ params }: { params: Promise<{ id:
         .single()
 
     if (!quiz) return <div className="text-center py-12 text-muted-foreground">Quiz not found.</div>
+
+    // Fetch modules for the quiz's course for the week selector
+    const { data: modules } = await supabase
+        .from('modules')
+        .select('id, title, order_index')
+        .eq('course_id', quiz.course_id)
+        .order('order_index', { ascending: true })
 
     const questions = (quiz.questions || []) as Array<{
         id: string
@@ -71,18 +77,9 @@ export default async function QuizEditorPage({ params }: { params: Promise<{ id:
                         </p>
                     </div>
                 </div>
-                <form action={async () => {
-                    'use server'
-                    await generateQuizQuestions(id, 5)
-                }}>
-                    <Button variant="outline" size="sm" className="gap-2">
-                        <Sparkles className="w-4 h-4" />
-                        Generate with AI
-                    </Button>
-                </form>
             </div>
 
-            <QuizQuestionEditor quizId={id} questions={questions} />
+            <QuizQuestionEditor quizId={id} questions={questions} modules={modules || []} />
         </div>
     )
 }
