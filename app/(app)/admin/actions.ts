@@ -106,7 +106,8 @@ export async function inviteStudent(_prevState: unknown, formData: FormData) {
 
 /**
  * Invites a new instructor. Only callable by admins.
- * Generates a sign-up link (no email sent) — admin shares the link manually.
+ * Creates the user and returns a sign-up link — no email sent, admin shares the link manually.
+ * The link takes the instructor to a signup form where they set name + password.
  */
 export async function inviteInstructor(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
@@ -127,28 +128,26 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
     const admin = createAdminClient()
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    // Generate a magic link — no email sent, one-click login, instructor sets name + password on arrival
-    const { data, error: linkError } = await admin.auth.admin.generateLink({
-        type: 'magiclink',
+    // Create user with random temp password (email confirmed so they exist)
+    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
         email,
-        options: {
-            redirectTo: `${appUrl}/auth/accept-invite`,
-        },
+        password: crypto.randomUUID(),
+        email_confirm: true,
     })
 
-    if (linkError) return { error: linkError.message }
-
-    const actionLink = data?.properties?.action_link
-    if (!actionLink || !data?.user?.id) return { error: 'Failed to generate invite link' }
+    if (createError) return { error: createError.message }
+    if (!newUser?.user?.id) return { error: 'Failed to create user' }
 
     // Pre-create profile row with instructor role
     await admin.from('profiles').upsert({
-        id: data.user.id,
+        id: newUser.user.id,
         role: 'instructor',
     }, { onConflict: 'id' })
 
+    const link = `${appUrl}/auth/accept-invite?email=${encodeURIComponent(email)}`
+
     revalidatePath('/admin/users')
-    return { success: true, link: actionLink, email }
+    return { success: true, link, email }
 }
 
 // ─── Course Management ─────────────────────────────────────────
