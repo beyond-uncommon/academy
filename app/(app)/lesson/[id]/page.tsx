@@ -62,11 +62,14 @@ export default async function LessonPage({
     const moduleTitle = (lesson.module as any)?.title || 'Unknown Module'
 
     // Fetch quiz (lesson assessment)
-    const { data: quiz } = await supabase
+    const { data: rawQuiz } = await supabase
         .from('quizzes')
         .select('*, questions:quiz_questions(*)')
         .eq('lesson_id', id)
         .single()
+
+    // Only published questions shown to learners
+    const quiz = rawQuiz ? { ...rawQuiz, questions: (rawQuiz.questions || []).filter((q: any) => !q.is_draft) } : null
 
     const { data: projectSubmission } = await supabase
         .from('project_submissions')

@@ -4,6 +4,10 @@ import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { checkGraduation } from '@/lib/graduation'
 
+function isStaff(role?: string | null) {
+    return role === 'admin' || role === 'instructor'
+}
+
 /**
  * Creates a new admin user. Only callable by existing admins.
  */
@@ -38,13 +42,108 @@ export async function createAdminUser(_prevState: unknown, formData: FormData) {
 
     if (createError) return { error: createError.message }
 
-    // Set role to admin in profiles (trigger creates the row, but may not exist yet)
     const { error: profileError } = await admin
         .from('profiles')
         .upsert({
             id: newUser.user.id,
             full_name: name,
             role: 'admin',
+        }, { onConflict: 'id' })
+
+    if (profileError) return { error: profileError.message }
+
+    revalidatePath('/admin/users')
+    return { success: true, email }
+}
+
+/**
+ * Invites a new student. Callable by admins and instructors.
+ */
+export async function inviteStudent(_prevState: unknown, formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (!isStaff(profile?.role)) return { error: 'Unauthorized' }
+
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!name || !email || !password) return { error: 'All fields are required' }
+    if (password.length < 8) return { error: 'Password must be at least 8 characters' }
+
+    const admin = createAdminClient()
+
+    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: name },
+    })
+
+    if (createError) return { error: createError.message }
+
+    const { error: profileError } = await admin
+        .from('profiles')
+        .upsert({
+            id: newUser.user.id,
+            full_name: name,
+            role: 'learner',
+        }, { onConflict: 'id' })
+
+    if (profileError) return { error: profileError.message }
+
+    revalidatePath('/admin/students')
+    return { success: true, email }
+}
+
+/**
+ * Creates a new instructor. Only callable by admins.
+ */
+export async function inviteInstructor(_prevState: unknown, formData: FormData) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+    const name = formData.get('name') as string
+    const email = formData.get('email') as string
+    const password = formData.get('password') as string
+
+    if (!name || !email || !password) return { error: 'All fields are required' }
+    if (password.length < 8) return { error: 'Password must be at least 8 characters' }
+
+    const admin = createAdminClient()
+
+    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+        email,
+        password,
+        email_confirm: true,
+        user_metadata: { full_name: name },
+    })
+
+    if (createError) return { error: createError.message }
+
+    const { error: profileError } = await admin
+        .from('profiles')
+        .upsert({
+            id: newUser.user.id,
+            full_name: name,
+            role: 'instructor',
         }, { onConflict: 'id' })
 
     if (profileError) return { error: profileError.message }
@@ -261,10 +360,43 @@ export async function addQuestion(quizId: string, question: string, options: { t
 
     revalidatePath('/admin/courses/*')
     revalidatePath('/admin/assessments')
+    revalidatePath(`/admin/quizzes/${quizId}`)
     return { success: true }
 }
 
-export async function deleteQuestion(questionId: string) {
+export async function updateQuestion(questionId: string, data: {
+    question: string
+    options: { text: string; is_correct: boolean }[]
+    explanation: string | null
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('quiz_questions')
+        .update({
+            question: data.question,
+            options: data.options,
+            explanation: data.explanation || null,
+        })
+        .eq('id', questionId)
+
+    if (error) throw error
+
+    revalidatePath('/admin/assessments')
+    revalidatePath('/admin/courses/*')
+    return { success: true }
+}
+
+export async function deleteQuestion(questionId: string, quizId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Not authenticated')
@@ -279,6 +411,30 @@ export async function deleteQuestion(questionId: string) {
     const { error } = await supabase.from('quiz_questions').delete().eq('id', questionId)
     if (error) throw error
 
+    revalidatePath(`/admin/quizzes/${quizId}`)
+    revalidatePath('/admin/courses/*')
+    revalidatePath('/admin/assessments')
+    return { success: true }
+}
+
+export async function updateQuiz(quizId: string, data: Record<string, unknown>) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase.from('quizzes').update(data).eq('id', quizId)
+    if (error) throw error
+
+    revalidatePath(`/admin/quizzes/${quizId}`)
+    revalidatePath('/admin/courses/*')
+    revalidatePath('/admin/assessments')
     return { success: true }
 }
 
@@ -299,6 +455,150 @@ export async function toggleQuizPublish(quizId: string, isPublished: boolean) {
 
     revalidatePath('/admin/assessments')
     revalidatePath('/admin/courses/*')
+    return { success: true }
+}
+
+// ─── AI Question Generation ─────────────────────────────────────
+
+export async function generateQuizQuestions(quizId: string, count = 5) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    // Fetch quiz with its context
+    const { data: quiz } = await supabase
+        .from('quizzes')
+        .select('*, course:courses(title, description), module:modules(title, lessons:lessons(title, content, type))')
+        .eq('id', quizId)
+        .single()
+
+    if (!quiz) return { error: 'Quiz not found' }
+
+    // Build curriculum context
+    const lessons = quiz.module?.lessons || []
+    const { buildCurriculumContext, generateQuestions } = await import('@/lib/ai/generate-questions')
+
+    const context = buildCurriculumContext({
+        courseTitle: quiz.course?.title,
+        courseDescription: quiz.course?.description,
+        moduleTitle: quiz.module?.title,
+        lessons: lessons.map((l: any) => ({
+            title: l.title,
+            contentNotes: l.content?.notes,
+            contentBody: l.content?.body || l.content?.text_content,
+            type: l.type,
+        })),
+    })
+
+    if (!context.trim()) return { error: 'No curriculum content found for this quiz context' }
+
+    try {
+        const generated = await generateQuestions(context, count)
+
+        // Get next order_index
+        const { data: last } = await supabase
+            .from('quiz_questions')
+            .select('order_index')
+            .eq('quiz_id', quizId)
+            .order('order_index', { ascending: false })
+            .limit(1)
+
+        let orderIndex = (last?.[0]?.order_index ?? 0) + 1
+
+        // Insert each as draft
+        for (const q of generated) {
+            const { error } = await supabase.from('quiz_questions').insert({
+                quiz_id: quizId,
+                question: q.question,
+                options: q.options,
+                explanation: q.explanation,
+                order_index: orderIndex++,
+                is_draft: true,
+                generated_by: 'ai',
+            })
+            if (error) throw error
+        }
+
+        revalidatePath(`/admin/quizzes/${quizId}`)
+        revalidatePath('/admin/assessments')
+        return { success: true, count: generated.length }
+    } catch (e) {
+        return { error: e instanceof Error ? e.message : 'AI generation failed' }
+    }
+}
+
+export async function publishQuestion(questionId: string, quizId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('quiz_questions')
+        .update({ is_draft: false })
+        .eq('id', questionId)
+    if (error) throw error
+
+    revalidatePath(`/admin/quizzes/${quizId}`)
+    return { success: true }
+}
+
+export async function publishAllQuestions(quizId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('quiz_questions')
+        .update({ is_draft: false })
+        .eq('quiz_id', quizId)
+        .eq('is_draft', true)
+    if (error) throw error
+
+    revalidatePath(`/admin/quizzes/${quizId}`)
+    revalidatePath('/admin/assessments')
+    return { success: true }
+}
+
+export async function unpublishQuestion(questionId: string, quizId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) throw new Error('Not authenticated')
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+
+    const { error } = await supabase
+        .from('quiz_questions')
+        .update({ is_draft: true })
+        .eq('id', questionId)
+    if (error) throw error
+
+    revalidatePath(`/admin/quizzes/${quizId}`)
     return { success: true }
 }
 
@@ -402,7 +702,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
         .eq('id', user.id)
         .single()
 
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (!isStaff(profile?.role)) throw new Error('Unauthorized')
 
     const updatePayload: Record<string, unknown> = { status, score: score || 0 }
     if (feedback !== undefined) updatePayload.feedback = feedback

@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, EyeOff, ClipboardCheck } from 'lucide-react'
+import { Eye, EyeOff, ClipboardCheck, Pencil } from 'lucide-react'
 import Link from 'next/link'
 
 const assessmentTypeLabel: Record<string, string> = {
@@ -90,6 +90,12 @@ export default async function AdminAssessmentsPage() {
                                         </td>
                                         <td className="p-4 align-middle text-right">
                                             <div className="flex items-center justify-end gap-2">
+                                                <Link href={`/admin/quizzes/${a.id}`}>
+                                                    <Button variant="ghost" size="sm" className="gap-1">
+                                                        <Pencil className="w-3.5 h-3.5" />
+                                                        Edit
+                                                    </Button>
+                                                </Link>
                                                 <Link href={`/assessments/${a.id}`}>
                                                     <Button variant="ghost" size="sm" className="gap-1">
                                                         <ClipboardCheck className="w-3.5 h-3.5" />

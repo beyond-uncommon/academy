@@ -10,26 +10,26 @@ interface TopBarProps {
     totalXP?: number
     streak?: number
     rank?: Rank
-    isAdmin?: boolean
+    isStaff?: boolean
     unreadNotifications?: number
     notifications?: any[]
 }
 
-export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isAdmin = false, unreadNotifications = 0, notifications = [] }: TopBarProps) {
+export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isStaff = false, unreadNotifications = 0, notifications = [] }: TopBarProps) {
     return (
         <header className="h-14 border-b border-border/40 bg-background/80 backdrop-blur-sm flex items-center justify-end px-6 gap-6 sticky top-0 z-40">
-            {isAdmin && (
+            {isStaff && (
                 <div className="mr-auto flex items-center gap-3">
                     <Link href="/admin">
                         <Button variant="ghost" size="sm" className="gap-2 text-primary hover:text-primary hover:bg-primary/10">
                             <Shield className="w-4 h-4" />
-                            <span className="text-xs font-bold uppercase tracking-wider">Admin Panel</span>
+                            <span className="text-xs font-bold uppercase tracking-wider">Staff Panel</span>
                         </Button>
                     </Link>
                 </div>
             )}
 
-            {!isAdmin && <div className="mr-auto" />}
+            {!isStaff && <div className="mr-auto" />}
 
             {/* Search */}
             <SearchBar />

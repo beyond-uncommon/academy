@@ -10,7 +10,7 @@ create table public.profiles (
   full_name text,
   avatar_url text,
   bio text,
-  role text default 'learner' check (role in ('learner', 'admin')),
+  role text default 'learner' check (role in ('learner', 'admin', 'instructor')),
   gender text,
   age integer,
   innovation_hub text,
@@ -109,7 +109,9 @@ create table public.quiz_questions (
   question text not null,
   options jsonb not null,
   explanation text,
-  order_index integer not null
+  order_index integer not null,
+  is_draft boolean default false,
+  generated_by text default 'admin' check (generated_by in ('admin', 'ai'))
 );
 
 -- ─── User Progress ────────────────────────────────────────────
@@ -511,7 +513,6 @@ create table if not exists public.user_activity_log (
 );
 
 create index if not exists idx_activity_log_user on public.user_activity_log(user_id, created_at desc);
-create index if not exists idx_activity_log_weekly on public.user_activity_log(user_id, created_at) where created_at > now() - interval '7 days';
 
 alter table public.user_activity_log enable row level security;
 
@@ -562,11 +563,11 @@ end;
 $$ language plpgsql security definer;
 
 -- ─── Full-Text Search Indexes ─────────────────────────────────
-create index if not exists idx_courses_title_search on public.courses using gin(to_tsvector('english', coalesce(title, '')));
-create index if not exists idx_courses_desc_search on public.courses using gin(to_tsvector('english', coalesce(description, '')));
-create index if not exists idx_lessons_title_search on public.lessons using gin(to_tsvector('english', coalesce(title, '')));
-create index if not exists idx_profiles_name_search on public.profiles using gin(to_tsvector('english', coalesce(full_name, '')));
-create index if not exists idx_profiles_bio_search on public.profiles using gin(to_tsvector('english', coalesce(bio, '')));
+create index if not exists idx_courses_title_search on public.courses using gin(to_tsvector('english'::regconfig, coalesce(title, '')));
+create index if not exists idx_courses_desc_search on public.courses using gin(to_tsvector('english'::regconfig, coalesce(description, '')));
+create index if not exists idx_lessons_title_search on public.lessons using gin(to_tsvector('english'::regconfig, coalesce(title, '')));
+create index if not exists idx_profiles_name_search on public.profiles using gin(to_tsvector('english'::regconfig, coalesce(full_name, '')));
+create index if not exists idx_profiles_bio_search on public.profiles using gin(to_tsvector('english'::regconfig, coalesce(bio, '')));
 
 -- ─── Project Likes ────────────────────────────────────────────
 create table if not exists public.project_likes (

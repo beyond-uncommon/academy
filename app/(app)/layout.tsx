@@ -4,6 +4,10 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getNotifications, getUnreadCount } from '@/lib/notifications'
 
+function isStaff(role?: string | null) {
+    return role === 'admin' || role === 'instructor'
+}
+
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -42,10 +46,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const username = profile?.full_name || 'Learner'
     const initials = username.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'L'
 
+    const role = profile?.role
+
     return (
         <div className="flex min-h-screen bg-background">
             <Sidebar
-                isAdmin={profile?.role === 'admin'}
+                isAdmin={role === 'admin'}
+                isInstructor={role === 'instructor'}
                 username={username}
                 userInitials={initials}
                 avatarUrl={profile?.avatar_url}
@@ -55,7 +62,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     totalXP={xp?.total_xp || 0}
                     streak={streak?.current_streak || 0}
                     rank={xp?.rank || 'beginner'}
-                    isAdmin={profile?.role === 'admin'}
+                    isStaff={isStaff(role)}
                     unreadNotifications={unreadCount}
                     notifications={notifications}
                 />

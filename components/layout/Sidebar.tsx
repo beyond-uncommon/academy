@@ -17,6 +17,7 @@ import {
     ClipboardCheck,
     Activity,
     Search,
+    GraduationCap,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -38,6 +39,7 @@ const navItems = [
 
 interface SidebarProps {
     isAdmin?: boolean
+    isInstructor?: boolean
     userInitials?: string
     avatarUrl?: string
     username?: string
@@ -45,11 +47,13 @@ interface SidebarProps {
 
 export function Sidebar({
     isAdmin = false,
+    isInstructor = false,
     userInitials = 'U',
     avatarUrl,
     username = 'Learner',
 }: SidebarProps) {
     const pathname = usePathname()
+    const showStaffNav = isAdmin || isInstructor
 
     return (
         <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-border/40 bg-card/30 p-4">
@@ -79,47 +83,53 @@ export function Sidebar({
                     )
                 })}
 
-                {isAdmin && (
+                {showStaffNav && (
                     <>
                         <div className="mt-6 mb-2 px-3">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Admin Management</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                {isAdmin ? 'Admin Management' : 'Instructor'}
+                            </p>
                         </div>
-                        <Link href="/admin">
-                            <Button
-                                variant={pathname === '/admin' ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname === '/admin' ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <Shield className="w-4 h-4 shrink-0" />
-                                Admin Overview
-                            </Button>
-                        </Link>
-                        <Link href="/admin/courses">
-                            <Button
-                                variant={pathname.startsWith('/admin/courses') ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/courses') ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <BookOpen className="w-4 h-4 shrink-0" />
-                                Courses
-                            </Button>
-                        </Link>
-                        <Link href="/admin/assessments">
-                            <Button
-                                variant={pathname.startsWith('/admin/assessments') ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/assessments') ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <ClipboardCheck className="w-4 h-4 shrink-0" />
-                                Assessments
-                            </Button>
-                        </Link>
+                        {isAdmin && (
+                            <>
+                                <Link href="/admin">
+                                    <Button
+                                        variant={pathname === '/admin' ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname === '/admin' ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <Shield className="w-4 h-4 shrink-0" />
+                                        Admin Overview
+                                    </Button>
+                                </Link>
+                                <Link href="/admin/courses">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/courses') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/courses') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <BookOpen className="w-4 h-4 shrink-0" />
+                                        Courses
+                                    </Button>
+                                </Link>
+                                <Link href="/admin/assessments">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/assessments') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/assessments') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <ClipboardCheck className="w-4 h-4 shrink-0" />
+                                        Assessments
+                                    </Button>
+                                </Link>
+                            </>
+                        )}
                         <Link href="/admin/submissions">
                             <Button
                                 variant={pathname.startsWith('/admin/submissions') ? 'secondary' : 'ghost'}
@@ -142,6 +152,18 @@ export function Sidebar({
                             >
                                 <BarChart2 className="w-4 h-4 shrink-0" />
                                 Analytics
+                            </Button>
+                        </Link>
+                        <Link href="/admin/students">
+                            <Button
+                                variant={pathname.startsWith('/admin/students') ? 'secondary' : 'ghost'}
+                                className={cn(
+                                    'w-full justify-start gap-3 text-sm font-medium',
+                                    pathname.startsWith('/admin/students') ? '' : 'text-muted-foreground hover:text-foreground'
+                                )}
+                            >
+                                <GraduationCap className="w-4 h-4 shrink-0" />
+                                Students
                             </Button>
                         </Link>
                     </>
@@ -167,4 +189,3 @@ export function Sidebar({
         </aside>
     )
 }
-

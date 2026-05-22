@@ -8,16 +8,19 @@ create table if not exists public.project_likes (
 
 alter table public.project_likes enable row level security;
 
+drop policy if exists "Anyone can read likes" on public.project_likes;
 create policy "Anyone can read likes"
   on public.project_likes for select
   to authenticated
   using (true);
 
+drop policy if exists "Users can manage own likes" on public.project_likes;
 create policy "Users can manage own likes"
   on public.project_likes for insert
   to authenticated
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can remove own likes" on public.project_likes;
 create policy "Users can remove own likes"
   on public.project_likes for delete
   to authenticated

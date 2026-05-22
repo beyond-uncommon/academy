@@ -14,22 +14,26 @@ create index if not exists idx_lesson_comments_parent on public.lesson_comments(
 
 alter table public.lesson_comments enable row level security;
 
+drop policy if exists "Anyone can read comments" on public.lesson_comments;
 create policy "Anyone can read comments"
   on public.lesson_comments for select
   to authenticated
   using (true);
 
+drop policy if exists "Users can create comments" on public.lesson_comments;
 create policy "Users can create comments"
   on public.lesson_comments for insert
   to authenticated
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can update own comments" on public.lesson_comments;
 create policy "Users can update own comments"
   on public.lesson_comments for update
   to authenticated
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Users can delete own comments" on public.lesson_comments;
 create policy "Users can delete own comments"
   on public.lesson_comments for delete
   to authenticated

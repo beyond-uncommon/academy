@@ -32,11 +32,13 @@ create index if not exists idx_notifications_unread on public.notifications(user
 alter table public.notifications enable row level security;
 
 -- Users can read & update their own notifications; system inserts via service role
+drop policy if exists "Users can read own notifications" on public.notifications;
 create policy "Users can read own notifications"
   on public.notifications for select
   to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "Users can mark own notifications as read" on public.notifications;
 create policy "Users can mark own notifications as read"
   on public.notifications for update
   to authenticated

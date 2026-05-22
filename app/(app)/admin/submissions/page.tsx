@@ -20,7 +20,8 @@ export default async function AdminSubmissionsPage() {
         .eq('id', user.id)
         .single()
 
-    if (profile?.role !== 'admin') redirect('/dashboard')
+    const isStaff = profile?.role === 'admin' || profile?.role === 'instructor'
+    if (!isStaff) redirect('/dashboard')
 
     const admin = createAdminClient()
 

@@ -18,15 +18,16 @@ create table if not exists public.user_activity_log (
 );
 
 create index if not exists idx_activity_log_user on public.user_activity_log(user_id, created_at desc);
-create index if not exists idx_activity_log_weekly on public.user_activity_log(user_id, created_at) where created_at > now() - interval '7 days';
 
 alter table public.user_activity_log enable row level security;
 
+drop policy if exists "Users can read own activity" on public.user_activity_log;
 create policy "Users can read own activity"
   on public.user_activity_log for select
   to authenticated
   using (auth.uid() = user_id);
 
+drop policy if exists "System can insert activity" on public.user_activity_log;
 create policy "System can insert activity"
   on public.user_activity_log for insert
   to authenticated

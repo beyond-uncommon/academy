@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, BookOpen, Eye, EyeOff, Layers, Trash2, Plus, Clock, Zap, ClipboardCheck } from 'lucide-react'
+import { ArrowLeft, BookOpen, Eye, EyeOff, Layers, Trash2, Plus, Clock, Zap, ClipboardCheck, Pencil } from 'lucide-react'
 import { toggleCoursePublish, deleteModule, toggleLessonStatus, toggleQuizPublish } from '../../actions'
 import { CreateModuleDialog } from '../components/CreateModuleDialog'
 import { CreateLessonDialog } from '../../lessons/components/CreateLessonDialog'
@@ -185,6 +185,12 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                                                 {quiz.is_published ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
                                             </Button>
                                         </form>
+                                        <Link href={`/admin/quizzes/${quiz.id}`}>
+                                            <Button variant="ghost" size="sm" className="gap-1">
+                                                <Pencil className="w-3.5 h-3.5" />
+                                                Questions
+                                            </Button>
+                                        </Link>
                                         <Link href={`/assessments/${quiz.id}`}>
                                             <Button variant="ghost" size="sm">Preview</Button>
                                         </Link>

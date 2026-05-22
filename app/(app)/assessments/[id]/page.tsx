@@ -29,6 +29,8 @@ export default async function AssessmentPage({
 
     if (!quiz) notFound()
 
+    const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
+
     // Progression check for module assessments
     if (quiz.type === 'module' && quiz.module_id) {
         const { data: moduleLessons } = await supabase
@@ -147,7 +149,7 @@ export default async function AssessmentPage({
                     id: quiz.id,
                     title: quiz.title,
                     type: quiz.type,
-                    questions: quiz.questions.map((q: any) => ({
+                    questions: publishedQuestions.map((q: any) => ({
                         id: q.id,
                         question: q.question,
                         options: q.options,

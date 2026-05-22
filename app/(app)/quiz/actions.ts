@@ -120,7 +120,7 @@ export async function startAssessment(quizId: string) {
     if (!user) throw new Error('Not authenticated')
 
     try {
-        // Fetch quiz with assessment config
+        // Fetch quiz with assessment config (exclude draft questions)
         const { data: quiz } = await supabase
             .from('quizzes')
             .select('*, questions:quiz_questions(*)')
@@ -128,6 +128,9 @@ export async function startAssessment(quizId: string) {
             .single()
 
         if (!quiz) throw new Error('Assessment not found')
+
+        // Filter to published questions only and shuffle
+        const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
 
         // Check can retake
         const { data: retake } = await supabase
@@ -164,6 +167,12 @@ export async function startAssessment(quizId: string) {
 
         if (error) throw error
 
+        // Fisher-Yates shuffle for per-student randomization
+        for (let i = publishedQuestions.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [publishedQuestions[i], publishedQuestions[j]] = [publishedQuestions[j], publishedQuestions[i]]
+        }
+
         return {
             success: true,
             attemptId: attempt.id,
@@ -171,7 +180,7 @@ export async function startAssessment(quizId: string) {
                 id: quiz.id,
                 title: quiz.title,
                 type: quiz.type,
-                questions: quiz.questions.map((q: any) => ({
+                questions: publishedQuestions.map((q: any) => ({
                     id: q.id,
                     question: q.question,
                     options: q.options.map((o: any) => ({ text: o.text })), // strip is_correct
@@ -243,11 +252,13 @@ export async function submitAssessment(
             .eq('user_id', user.id)
             .single()
 
-        // Score questions
-        let correctCount = 0
-        const totalQuestions = quiz.questions.length
+        // Only score published questions
+        const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
 
-        quiz.questions.forEach((q: any) => {
+        let correctCount = 0
+        const totalQuestions = publishedQuestions.length
+
+        publishedQuestions.forEach((q: any) => {
             const userAnswer = userAnswers[q.id]
             const correctIndex = (q.options as Array<{ text: string; is_correct: boolean }>)
                 .findIndex((o: any) => o.is_correct)

@@ -1,4 +1,4 @@
-export type UserRole = 'learner' | 'admin'
+export type UserRole = 'learner' | 'admin' | 'instructor'
 
 export type CourseType = 'crash_course' | 'specialization'
 
