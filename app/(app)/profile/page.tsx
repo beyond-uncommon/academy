@@ -25,21 +25,21 @@ export default async function ProfilePage() {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch XP & Rank
     const { data: xp } = await supabase
         .from('user_xp')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch Streak
     const { data: streak } = await supabase
         .from('user_streaks')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch Badges
     const { data: userBadges } = await supabase

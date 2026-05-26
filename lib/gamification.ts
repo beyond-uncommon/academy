@@ -18,7 +18,7 @@ export async function updateStreak(userId: string) {
         .from('user_streaks')
         .select('*')
         .eq('user_id', userId)
-        .single()
+        .maybeSingle()
 
     if (!streak) {
         // First ever activity

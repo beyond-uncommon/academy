@@ -93,7 +93,8 @@ export default async function AdminSubmissionsPage() {
                                 <form action={async (formData: FormData) => {
                                     'use server'
                                     const feedback = formData.get('feedback') as string
-                                    await reviewSubmission(sub.id, 'reviewed', undefined, feedback)
+                                    const res = await reviewSubmission(sub.id, 'reviewed', undefined, feedback)
+                                    if (res?.error) throw new Error(res.error)
                                 }} className="space-y-2">
                                     <label className="text-xs font-medium flex items-center gap-1.5 text-muted-foreground">
                                         <MessageSquare className="w-3 h-3" />
@@ -120,7 +121,8 @@ export default async function AdminSubmissionsPage() {
                                 <form action={async (formData: FormData) => {
                                     'use server'
                                     const feedback = formData.get('feedback') as string
-                                    await reviewSubmission(sub.id, 'approved', undefined, feedback || undefined)
+                                    const res = await reviewSubmission(sub.id, 'approved', undefined, feedback || undefined)
+                                    if (res?.error) throw new Error(res.error)
                                 }}>
                                     <input type="hidden" name="feedback" value={(sub as any).feedback || ''} />
                                     <Button

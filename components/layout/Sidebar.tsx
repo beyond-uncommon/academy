@@ -18,6 +18,12 @@ import {
     Activity,
     Search,
     GraduationCap,
+    Wrench,
+    Library,
+    Bell,
+    Award,
+    HelpCircle,
+    Calendar,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -28,13 +34,20 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 const navItems = [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/courses', label: 'Courses', icon: BookOpen },
-    { href: '/search', label: 'Search', icon: Search },
+    { href: '/projects', label: 'Projects', icon: Wrench },
     { href: '/community', label: 'Community', icon: Users },
+    { href: '/resources', label: 'Resources', icon: Library },
     { href: '/career', label: 'Career', icon: Briefcase },
     { href: '/assessments', label: 'Assessments', icon: ClipboardCheck },
+    { href: '/leaderboard', label: 'Leaderboard', icon: Trophy },
     { href: '/analytics', label: 'Analytics', icon: Activity },
+    { href: '/badges', label: 'Badges', icon: Award },
     { href: '/profile', label: 'My Progress', icon: User },
+    { href: '/notifications', label: 'Notifications', icon: Bell },
+    { href: '/events', label: 'Events', icon: Calendar },
+    { href: '/help', label: 'Help', icon: HelpCircle },
     { href: '/settings', label: 'Settings', icon: Settings },
+    { href: '/search', label: 'Search', icon: Search },
 ]
 
 interface SidebarProps {
@@ -101,7 +114,7 @@ export function Sidebar({
                                         )}
                                     >
                                         <Shield className="w-4 h-4 shrink-0" />
-                                        Admin Overview
+                                        Overview
                                     </Button>
                                 </Link>
                                 <Link href="/admin/courses">
@@ -116,6 +129,18 @@ export function Sidebar({
                                         Courses
                                     </Button>
                                 </Link>
+                                <Link href="/admin/lessons">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/lessons') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/lessons') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <BookOpen className="w-4 h-4 shrink-0" />
+                                        Lessons
+                                    </Button>
+                                </Link>
                                 <Link href="/admin/assessments">
                                     <Button
                                         variant={pathname.startsWith('/admin/assessments') ? 'secondary' : 'ghost'}
@@ -128,44 +153,56 @@ export function Sidebar({
                                         Assessments
                                     </Button>
                                 </Link>
+                                <Link href="/admin/users">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/users') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/users') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <Users className="w-4 h-4 shrink-0" />
+                                        Users
+                                    </Button>
+                                </Link>
+                                <Link href="/admin/students">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/students') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/students') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <GraduationCap className="w-4 h-4 shrink-0" />
+                                        Students
+                                    </Button>
+                                </Link>
+                                <Link href="/admin/submissions">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/submissions') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/submissions') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <Trophy className="w-4 h-4 shrink-0" />
+                                        Submissions
+                                    </Button>
+                                </Link>
+                                <Link href="/admin/analytics">
+                                    <Button
+                                        variant={pathname.startsWith('/admin/analytics') ? 'secondary' : 'ghost'}
+                                        className={cn(
+                                            'w-full justify-start gap-3 text-sm font-medium',
+                                            pathname.startsWith('/admin/analytics') ? '' : 'text-muted-foreground hover:text-foreground'
+                                        )}
+                                    >
+                                        <BarChart2 className="w-4 h-4 shrink-0" />
+                                        Analytics
+                                    </Button>
+                                </Link>
                             </>
                         )}
-                        <Link href="/admin/submissions">
-                            <Button
-                                variant={pathname.startsWith('/admin/submissions') ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/submissions') ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <Trophy className="w-4 h-4 shrink-0" />
-                                Review Projects
-                            </Button>
-                        </Link>
-                        <Link href="/admin/analytics">
-                            <Button
-                                variant={pathname.startsWith('/admin/analytics') ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/analytics') ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <BarChart2 className="w-4 h-4 shrink-0" />
-                                Analytics
-                            </Button>
-                        </Link>
-                        <Link href="/admin/students">
-                            <Button
-                                variant={pathname.startsWith('/admin/students') ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    pathname.startsWith('/admin/students') ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <GraduationCap className="w-4 h-4 shrink-0" />
-                                Students
-                            </Button>
-                        </Link>
                     </>
                 )}
             </nav>

@@ -7,15 +7,7 @@ import { MessageSquare, Trash2, Reply, Loader2 } from 'lucide-react'
 import { addComment, deleteComment, type Comment } from './actions'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
-
-function timeAgo(dateStr: string) {
-  const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-  if (diff < 60) return 'just now'
-  if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-  if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`
-  return new Date(dateStr).toLocaleDateString()
-}
+import { timeAgo } from '@/lib/utils'
 
 function CommentThread({
   comment,

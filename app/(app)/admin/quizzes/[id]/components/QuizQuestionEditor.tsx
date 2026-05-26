@@ -44,17 +44,17 @@ export function QuizQuestionEditor({ quizId, questions: initial, modules }: { qu
 
     async function handleSave(question: string, options: { text: string; is_correct: boolean }[], explanation: string) {
         try {
-            if (editQuestion) {
-                const { updateQuestion } = await import('../../../actions')
-                const res = await updateQuestion(editQuestion.id, { question, options, explanation })
-                if (!res.success) throw new Error('Failed to update')
-                toast.success('Question updated')
-            } else {
-                const { addQuestion } = await import('../../../actions')
-                const res = await addQuestion(quizId, question, options, explanation)
-                if (!res.success) throw new Error('Failed to add')
-                toast.success('Question added')
-            }
+                if (editQuestion) {
+                    const { updateQuestion } = await import('../../../actions')
+                    const res = await updateQuestion(editQuestion.id, { question, options, explanation })
+                    if (res?.error) throw new Error(res.error)
+                    toast.success('Question updated')
+                } else {
+                    const { addQuestion } = await import('../../../actions')
+                    const res = await addQuestion(quizId, question, options, explanation)
+                    if (res?.error) throw new Error(res.error)
+                    toast.success('Question added')
+                }
             setDialogOpen(false)
             setEditQuestion(null)
             router.refresh()
@@ -67,7 +67,7 @@ export function QuizQuestionEditor({ quizId, questions: initial, modules }: { qu
         try {
             const { deleteQuestion } = await import('../../../actions')
             const res = await deleteQuestion(questionId, quizId)
-            if (!res.success) throw new Error('Failed to delete')
+            if (res?.error) throw new Error(res.error)
             toast.success('Question deleted')
             setDeleteId(null)
             router.refresh()
@@ -105,7 +105,8 @@ export function QuizQuestionEditor({ quizId, questions: initial, modules }: { qu
     async function handlePublish(questionId: string) {
         try {
             const { publishQuestion } = await import('../../../actions')
-            await publishQuestion(questionId, quizId)
+            const res = await publishQuestion(questionId, quizId)
+            if (res?.error) throw new Error(res.error)
             toast.success('Question published')
             router.refresh()
         } catch (e) {
@@ -116,7 +117,8 @@ export function QuizQuestionEditor({ quizId, questions: initial, modules }: { qu
     async function handlePublishAll() {
         try {
             const { publishAllQuestions } = await import('../../../actions')
-            await publishAllQuestions(quizId)
+            const res = await publishAllQuestions(quizId)
+            if (res?.error) throw new Error(res.error)
             toast.success('All drafts published')
             router.refresh()
         } catch (e) {
@@ -127,7 +129,8 @@ export function QuizQuestionEditor({ quizId, questions: initial, modules }: { qu
     async function handleUnpublish(questionId: string) {
         try {
             const { unpublishQuestion } = await import('../../../actions')
-            await unpublishQuestion(questionId, quizId)
+            const res = await unpublishQuestion(questionId, quizId)
+            if (res?.error) throw new Error(res.error)
             toast.success('Question unpublished')
             router.refresh()
         } catch (e) {

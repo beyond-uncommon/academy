@@ -47,7 +47,7 @@ export function CreateLessonDialog({ modules }: { modules: ModuleItem[] }) {
             setOpen(false)
             router.refresh()
         } else {
-            toast.error('Failed to create lesson')
+            toast.error(res?.error || 'Failed to create lesson')
         }
         setIsLoading(false)
     }

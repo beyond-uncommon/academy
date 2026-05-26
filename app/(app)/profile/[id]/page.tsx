@@ -35,14 +35,14 @@ export default async function PublicProfilePage({
         .from('user_xp')
         .select('*')
         .eq('user_id', id)
-        .single()
+        .maybeSingle()
 
     // Fetch Streak
     const { data: streak } = await supabase
         .from('user_streaks')
         .select('*')
         .eq('user_id', id)
-        .single()
+        .maybeSingle()
 
     // Fetch Badges
     const { data: userBadges } = await supabase

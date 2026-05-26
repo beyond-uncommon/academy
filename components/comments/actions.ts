@@ -7,6 +7,7 @@ export interface Comment {
   id: string
   lesson_id?: string | null
   submission_id?: string | null
+  post_id?: string | null
   user_id: string
   parent_id: string | null
   content: string
@@ -18,11 +19,12 @@ export interface Comment {
   replies?: Comment[]
 }
 
-export async function getComments(target: { lesson_id?: string; submission_id?: string }): Promise<Comment[]> {
+export async function getComments(target: { lesson_id?: string; submission_id?: string; post_id?: string }): Promise<Comment[]> {
   const supabase = await createClient()
   const query: Record<string, string> = {}
   if (target.lesson_id) query.lesson_id = target.lesson_id
   if (target.submission_id) query.submission_id = target.submission_id
+  if (target.post_id) query.post_id = target.post_id
 
   const { data } = await supabase
     .from('lesson_comments')
@@ -44,7 +46,7 @@ export async function getComments(target: { lesson_id?: string; submission_id?: 
   }))
 }
 
-export async function addComment(target: { lesson_id?: string; submission_id?: string }, content: string, parentId?: string) {
+export async function addComment(target: { lesson_id?: string; submission_id?: string; post_id?: string }, content: string, parentId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
@@ -57,17 +59,18 @@ export async function addComment(target: { lesson_id?: string; submission_id?: s
   }
   if (target.lesson_id) payload.lesson_id = target.lesson_id
   if (target.submission_id) payload.submission_id = target.submission_id
+  if (target.post_id) payload.post_id = target.post_id
 
   const { error } = await supabase.from('lesson_comments').insert(payload)
   if (error) throw error
 
   if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
-  if (target.submission_id) revalidatePath('/community')
+  if (target.submission_id || target.post_id) revalidatePath('/community')
 
   return { success: true }
 }
 
-export async function deleteComment(commentId: string, target: { lesson_id?: string; submission_id?: string }) {
+export async function deleteComment(commentId: string, target: { lesson_id?: string; submission_id?: string; post_id?: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) throw new Error('Not authenticated')
@@ -81,7 +84,7 @@ export async function deleteComment(commentId: string, target: { lesson_id?: str
   if (error) throw error
 
   if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
-  if (target.submission_id) revalidatePath('/community')
+  if (target.submission_id || target.post_id) revalidatePath('/community')
   return { success: true }
 }
 

@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Zap, Flame, Trophy, BookOpen, ArrowRight, ClipboardCheck, Lock } from 'lucide-react'
+import { Zap, Flame, Trophy, BookOpen, ArrowRight, ClipboardCheck } from 'lucide-react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
@@ -25,8 +25,8 @@ export default async function DashboardPage() {
         { data: userProgress },
         { data: latestBadges }
     ] = await Promise.all([
-        supabase.from('user_xp').select('*').eq('user_id', user.id).single(),
-        supabase.from('user_streaks').select('*').eq('user_id', user.id).single(),
+        supabase.from('user_xp').select('*').eq('user_id', user.id).maybeSingle(),
+        supabase.from('user_streaks').select('*').eq('user_id', user.id).maybeSingle(),
         supabase.from('user_badges').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
         supabase.from('user_progress').select('*', { count: 'exact', head: true }).eq('user_id', user.id).eq('completed', true),
         supabase.from('skill_tree_nodes').select('*, modules(*)'),

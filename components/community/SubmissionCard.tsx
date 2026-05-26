@@ -5,17 +5,24 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Heart, MessageSquare, ExternalLink, Link2, Loader2, Trash2, Reply } from 'lucide-react'
+import { Heart, MessageSquare, ExternalLink, Link2, Loader2, Trash2 } from 'lucide-react'
 import Link from 'next/link'
-import { toggleLike, addComment, deleteComment } from '@/components/comments/actions'
+import { toggleLike, addComment, deleteComment, type Comment } from '@/components/comments/actions'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
+import { timeAgo } from '@/lib/utils'
+import type { ProjectSubmission, Profile } from '@/types'
+
+type SubmissionWithProfile = ProjectSubmission & {
+    profile?: Pick<Profile, 'full_name' | 'avatar_url' | 'username'>
+    lesson?: { title: string }
+}
 
 interface SubmissionCardProps {
-    submission: any
+    submission: SubmissionWithProfile
     initialLikes: number
     initialLiked: boolean
-    initialComments: any[]
+    initialComments: Comment[]
     currentUserId: string
 }
 
@@ -67,7 +74,7 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
                 <div className="flex items-center gap-2 mb-2">
                     <Link href={`/profile/${submission.user_id}`} className="flex items-center gap-2 group/author">
                         <Avatar className="w-6 h-6 border group-hover/author:border-primary/50 transition-colors">
-                            <AvatarImage src={submission.profile?.avatar_url} />
+                            <AvatarImage src={submission.profile?.avatar_url ?? undefined} />
                             <AvatarFallback className="text-[10px]">
                                 {submission.profile?.full_name?.charAt(0) || 'U'}
                             </AvatarFallback>
@@ -89,7 +96,7 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
                     <Link2 className="w-8 h-8 text-muted-foreground/30" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 flex items-center justify-center transition-all opacity-0 group-hover:opacity-100">
                         <a
-                            href={submission.submission_url}
+                            href={submission.submission_url ?? '#'}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="bg-background/90 text-foreground text-xs px-3 py-1.5 rounded-full border shadow-sm flex items-center gap-1.5"
@@ -179,11 +186,4 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
     )
 }
 
-function timeAgo(dateStr: string) {
-    const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 1000)
-    if (diff < 60) return 'just now'
-    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-    if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`
-    return new Date(dateStr).toLocaleDateString()
-}
+

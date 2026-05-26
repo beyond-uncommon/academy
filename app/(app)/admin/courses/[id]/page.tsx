@@ -67,7 +67,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                 <div className="flex items-center gap-2">
                     <form action={async () => {
                         'use server'
-                        await toggleCoursePublish(course.id, !course.is_published)
+                        const res = await toggleCoursePublish(course.id, !course.is_published)
+                        if (res?.error) throw new Error(res.error)
                     }}>
                         <Button variant="outline" size="sm" className="gap-2">
                             {course.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -125,7 +126,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                                 <CreateQuizDialog moduleId={mod.id} courseId={id} />
                                 <form action={async () => {
                                     'use server'
-                                    await deleteModule(mod.id, id)
+                                    const res = await deleteModule(mod.id, id)
+                                    if (res?.error) throw new Error(res.error)
                                 }}>
                                     <Button variant="ghost" size="sm" className="text-destructive">
                                         <Trash2 className="w-3.5 h-3.5" />
@@ -153,7 +155,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                                             </div>
                                             <form action={async () => {
                                                 'use server'
-                                                await toggleLessonStatus(lesson.id, !lesson.is_published)
+                                                const res = await toggleLessonStatus(lesson.id, !lesson.is_published)
+                                                if (res?.error) throw new Error(res.error)
                                             }}>
                                                 <Button variant="ghost" size="sm">
                                                     {lesson.is_published ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}
@@ -179,7 +182,8 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                                     <div className="flex items-center gap-1">
                                         <form action={async () => {
                                             'use server'
-                                            await toggleQuizPublish(quiz.id, !quiz.is_published)
+                                            const res = await toggleQuizPublish(quiz.id, !quiz.is_published)
+                                            if (res?.error) throw new Error(res.error)
                                         }}>
                                             <Button variant="ghost" size="sm">
                                                 {quiz.is_published ? <EyeOff className="w-3 h-3" /> : <Eye className="w-3 h-3" />}

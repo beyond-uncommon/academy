@@ -192,7 +192,39 @@ export interface ProjectSubmission {
   score: number | null
   xp_earned: number
   status: SubmissionStatus
+  feedback: string | null
   submitted_at: string
+}
+
+export interface CommunityPost {
+  id: string
+  user_id: string
+  title: string
+  content: string
+  type: 'question' | 'discussion' | 'tip' | 'showcase'
+  created_at: string
+  profile?: Pick<Profile, 'full_name' | 'avatar_url' | 'username'>
+  likes?: { count: number; liked: boolean }
+}
+
+export interface PostLike {
+  id: string
+  user_id: string
+  post_id: string
+  created_at: string
+}
+
+export interface LessonComment {
+  id: string
+  user_id: string
+  lesson_id: string | null
+  post_id: string | null
+  submission_id: string | null
+  parent_id: string | null
+  content: string
+  created_at: string
+  author?: Pick<Profile, 'full_name' | 'avatar_url'>
+  replies?: LessonComment[]
 }
 
 // ─── UI / App types ───────────────────────────────────────────────────────────

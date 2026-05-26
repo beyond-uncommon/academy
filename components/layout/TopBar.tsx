@@ -1,10 +1,11 @@
-import { Zap, Flame, Shield, Search } from 'lucide-react'
+import { Zap, Flame, Shield } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { RANK_LABELS, type Rank } from '@/types'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 import { NotificationBell } from '@/components/notifications/NotificationBell'
 import { SearchBar } from '@/components/search/SearchBar'
+import { ThemeToggle } from '@/components/ThemeToggle'
 
 interface TopBarProps {
     totalXP?: number
@@ -55,6 +56,9 @@ export function TopBar({ totalXP = 0, streak = 0, rank = 'beginner', isStaff = f
             <Badge variant="outline" className="text-xs">
                 {RANK_LABELS[rank]}
             </Badge>
+
+            {/* Theme */}
+            <ThemeToggle />
         </header>
     )
 }

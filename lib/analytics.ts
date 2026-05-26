@@ -32,8 +32,8 @@ export async function getLearnerStats(userId: string): Promise<LearnerStats> {
     supabase.from('user_progress').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('completed', true),
     supabase.from('user_quiz_attempts').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('passed', true),
     supabase.from('project_submissions').select('*', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'approved'),
-    supabase.from('user_xp').select('total_xp, rank').eq('user_id', userId).single(),
-    supabase.from('user_streaks').select('current_streak, longest_streak').eq('user_id', userId).single(),
+    supabase.from('user_xp').select('total_xp, rank').eq('user_id', userId).maybeSingle(),
+    supabase.from('user_streaks').select('current_streak, longest_streak').eq('user_id', userId).maybeSingle(),
     supabase.rpc('get_weekly_activity', { p_user_id: userId }),
     supabase.from('user_activity_log').select('*').eq('user_id', userId).order('created_at', { ascending: false }).limit(10),
   ])

@@ -1,12 +1,13 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { RANK_LABELS, type Rank } from '@/types'
+import { Users, GraduationCap, Shield } from 'lucide-react'
 import type { Metadata } from 'next'
 
-export const metadata: Metadata = { title: 'Admin — Learners' }
+export const metadata: Metadata = { title: 'Admin — Users' }
 
 export default async function AdminUsersPage() {
     const supabase = await createClient()
@@ -22,7 +23,6 @@ export default async function AdminUsersPage() {
 
     if (profile?.role !== 'admin') redirect('/dashboard')
 
-    // Use service-role client to bypass self-only RLS for cross-user admin reads
     const admin = createAdminClient()
 
     const { data: profiles } = await admin
@@ -53,13 +53,47 @@ export default async function AdminUsersPage() {
         lessonsCompleted: progressCount[p.id] ?? 0,
     }))
 
+    const adminCount = rows.filter(r => r.role === 'admin').length
+    const instructorCount = rows.filter(r => r.role === 'instructor').length
+    const learnerCount = rows.filter(r => r.role === 'learner').length
+
     return (
         <div className="space-y-6">
             <div>
-                <h1 className="text-2xl font-bold">Learners</h1>
+                <h1 className="text-2xl font-bold">Users</h1>
                 <p className="text-muted-foreground text-sm mt-1">
                     {rows.length} registered user{rows.length !== 1 ? 's' : ''}
                 </p>
+            </div>
+
+            <div className="grid grid-cols-3 gap-4">
+                <Card className="border-border/40">
+                    <CardHeader className="p-4 pb-2 flex flex-row items-center gap-3">
+                        <Shield className="w-5 h-5 text-primary" />
+                        <CardTitle className="text-sm">Admins</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <p className="text-2xl font-bold">{adminCount}</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-border/40">
+                    <CardHeader className="p-4 pb-2 flex flex-row items-center gap-3">
+                        <GraduationCap className="w-5 h-5 text-purple-500" />
+                        <CardTitle className="text-sm">Instructors</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <p className="text-2xl font-bold">{instructorCount}</p>
+                    </CardContent>
+                </Card>
+                <Card className="border-border/40">
+                    <CardHeader className="p-4 pb-2 flex flex-row items-center gap-3">
+                        <Users className="w-5 h-5 text-green-500" />
+                        <CardTitle className="text-sm">Students</CardTitle>
+                    </CardHeader>
+                    <CardContent className="p-4 pt-0">
+                        <p className="text-2xl font-bold">{learnerCount}</p>
+                    </CardContent>
+                </Card>
             </div>
 
             <Card className="border-border/40">

@@ -21,21 +21,21 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch XP & Rank
     const { data: xp } = await supabase
         .from('user_xp')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch Streak
     const { data: streak } = await supabase
         .from('user_streaks')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
     // Fetch Notifications
     const [notifications, unreadCount] = await Promise.all([
@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     const username = profile?.full_name || 'Learner'
     const initials = username.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'L'
 
-    const role = profile?.role
+    const role = profile?.role || 'learner'
 
     return (
         <div className="flex min-h-screen bg-background">

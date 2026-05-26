@@ -37,7 +37,19 @@ export async function updateSession(request: NextRequest) {
         url.pathname.startsWith('/courses') ||
         url.pathname.startsWith('/leaderboard') ||
         url.pathname.startsWith('/community') ||
-        url.pathname.startsWith('/settings')
+        url.pathname.startsWith('/settings') ||
+        url.pathname.startsWith('/assessments') ||
+        url.pathname.startsWith('/badges') ||
+        url.pathname.startsWith('/projects') ||
+        url.pathname.startsWith('/resources') ||
+        url.pathname.startsWith('/career') ||
+        url.pathname.startsWith('/analytics') ||
+        url.pathname.startsWith('/notifications') ||
+        url.pathname.startsWith('/events') ||
+        url.pathname.startsWith('/help') ||
+        url.pathname.startsWith('/search') ||
+        url.pathname.startsWith('/module') ||
+        url.pathname.startsWith('/portfolio')
 
     if (!user && isAppRoute) {
         url.pathname = '/login'
@@ -50,7 +62,7 @@ export async function updateSession(request: NextRequest) {
             .from('profiles')
             .select('onboarding_completed')
             .eq('id', user.id)
-            .single()
+            .maybeSingle()
 
         if (profile && !profile.onboarding_completed) {
             url.pathname = '/onboarding'

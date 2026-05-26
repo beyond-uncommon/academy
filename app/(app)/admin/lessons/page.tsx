@@ -72,7 +72,8 @@ export default async function AdminLessonsPage() {
                                         <td className="p-4 align-middle text-right">
                                             <form action={async () => {
                                                 'use server'
-                                                await toggleLessonStatus(lesson.id, !lesson.is_published)
+                                                const res = await toggleLessonStatus(lesson.id, !lesson.is_published)
+                                                if (res?.error) throw new Error(res.error)
                                             }}>
                                                 <Button variant="ghost" size="sm" className="gap-2">
                                                     {lesson.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}

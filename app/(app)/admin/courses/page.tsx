@@ -75,7 +75,8 @@ export default async function AdminCoursesPage() {
                                 <div className="flex items-center gap-2 shrink-0">
                                     <form action={async () => {
                                         'use server'
-                                        await toggleCoursePublish(course.id, !course.is_published)
+                                        const res = await toggleCoursePublish(course.id, !course.is_published)
+                                        if (res?.error) throw new Error(res.error)
                                     }}>
                                         <Button variant="ghost" size="sm">
                                             {course.is_published ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}

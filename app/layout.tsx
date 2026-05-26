@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
+import { ThemeProvider } from 'next-themes'
 import { Toaster } from '@/components/ui/sonner'
 import { PWAProvider } from '@/components/PWAProvider'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
@@ -48,18 +49,20 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <link rel="apple-touch-icon" href="/icon-192.svg" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className={`${inter.variable} font-sans antialiased bg-background text-foreground`}>
-        <PWAProvider>
-          {children}
-          <OfflineIndicator />
-          <Toaster richColors position="bottom-right" />
-        </PWAProvider>
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem disableTransitionOnChange>
+          <PWAProvider>
+            {children}
+            <OfflineIndicator />
+            <Toaster richColors position="bottom-right" />
+          </PWAProvider>
+        </ThemeProvider>
       </body>
     </html>
   )

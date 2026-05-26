@@ -3,16 +3,17 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
+import { verifyInviteCode } from '@/lib/invite'
 
-/** Must match the helpers in app/(app)/admin/actions.ts */
-const INVITE_SECRET = process.env.INVITE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-invite-secret'
-
-async function verifyInviteCode(code: string, sig: string): Promise<boolean> {
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey('raw', enc.encode(INVITE_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-    const expectedBuf = await crypto.subtle.sign('HMAC', key, enc.encode(code))
-    const expected = Array.from(new Uint8Array(expectedBuf)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
-    return sig === expected
+function parseInviteCode(code: string): { role: 'instructor' | 'learner'; uuid: string } | null {
+    const parts = code.split(':')
+    if (parts.length === 2 && (parts[0] === 'instructor' || parts[0] === 'learner')) {
+        return { role: parts[0], uuid: parts[1] }
+    }
+    if (parts.length === 1) {
+        return { role: 'instructor', uuid: parts[0] }
+    }
+    return null
 }
 
 export async function completeInstructorSetup(_prevState: unknown, formData: FormData) {
@@ -33,7 +34,9 @@ export async function completeInstructorSetup(_prevState: unknown, formData: For
         return { error: 'Passwords do not match' }
     }
 
-    // Verify the signed invite code (no DB lookup needed)
+    const parsed = parseInviteCode(code)
+    if (!parsed) return { error: 'Invalid invite code format.' }
+
     const valid = await verifyInviteCode(code, sig)
     if (!valid) {
         return { error: 'Invalid or expired invite link.' }
@@ -41,7 +44,6 @@ export async function completeInstructorSetup(_prevState: unknown, formData: For
 
     const admin = createAdminClient()
 
-    // Create the user with their chosen email and password
     const { data: newUser, error: createError } = await admin.auth.admin.createUser({
         email,
         password,
@@ -57,19 +59,17 @@ export async function completeInstructorSetup(_prevState: unknown, formData: For
 
     if (!newUser?.user?.id) return { error: 'Failed to create user' }
 
-    // Create profile with instructor role
     const { error: profileError } = await admin
         .from('profiles')
         .upsert({
             id: newUser.user.id,
             full_name: name,
-            role: 'instructor',
+            role: parsed.role,
             onboarding_completed: true,
         }, { onConflict: 'id' })
 
     if (profileError) return { error: profileError.message }
 
-    // Sign the user in
     const supabase = await createClient()
     const { error: signInError } = await supabase.auth.signInWithPassword({ email, password })
     if (signInError) return { error: signInError.message }

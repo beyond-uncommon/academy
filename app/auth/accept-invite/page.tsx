@@ -20,10 +20,19 @@ function SubmitButton() {
     )
 }
 
+function useRole(code: string): 'instructor' | 'learner' {
+    const parts = code.split(':')
+    if (parts.length === 2 && (parts[0] === 'instructor' || parts[0] === 'learner')) {
+        return parts[0]
+    }
+    return 'instructor'
+}
+
 function AcceptInviteForm() {
     const searchParams = useSearchParams()
     const code = searchParams.get('code') || ''
     const sig = searchParams.get('s') || ''
+    const role = useRole(code)
     const [state, formAction] = useActionState(completeInstructorSetup, null) as any
 
     useEffect(() => {
@@ -45,13 +54,16 @@ function AcceptInviteForm() {
         )
     }
 
+    const roleLabel = role === 'instructor' ? 'an instructor' : 'a student'
+    const roleTitle = role === 'instructor' ? 'Join as Instructor' : 'Join as Student'
+
     return (
         <div className="flex items-center justify-center min-h-screen p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle>Join as Instructor</CardTitle>
+                    <CardTitle>{roleTitle}</CardTitle>
                     <CardDescription>
-                        You&apos;ve been invited to join as an instructor. Fill in your details to get started.
+                        You&apos;ve been invited to join as {roleLabel}. Fill in your details to get started.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>

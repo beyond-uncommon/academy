@@ -3,24 +3,10 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { checkGraduation } from '@/lib/graduation'
+import { signInviteCode } from '@/lib/invite'
 
 function isStaff(role?: string | null) {
     return role === 'admin' || role === 'instructor'
-}
-
-/** Signs an invite code with HMAC-SHA256 so it can be verified without DB storage. */
-const INVITE_SECRET = process.env.INVITE_SECRET || process.env.SUPABASE_SERVICE_ROLE_KEY || 'dev-invite-secret'
-
-async function signInviteCode(code: string): Promise<string> {
-    const enc = new TextEncoder()
-    const key = await crypto.subtle.importKey('raw', enc.encode(INVITE_SECRET), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign'])
-    const sig = await crypto.subtle.sign('HMAC', key, enc.encode(code))
-    return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('').slice(0, 16)
-}
-
-async function verifyInviteCode(code: string, sig: string): Promise<boolean> {
-    const expected = await signInviteCode(code)
-    return sig === expected
 }
 
 /**
@@ -72,59 +58,11 @@ export async function createAdminUser(_prevState: unknown, formData: FormData) {
 }
 
 /**
- * Invites a new student. Callable by admins and instructors.
- */
-export async function inviteStudent(_prevState: unknown, formData: FormData) {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { error: 'Not authenticated' }
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', user.id)
-        .single()
-
-    if (!isStaff(profile?.role)) return { error: 'Unauthorized' }
-
-    const name = formData.get('name') as string
-    const email = formData.get('email') as string
-    const password = formData.get('password') as string
-
-    if (!name || !email || !password) return { error: 'All fields are required' }
-    if (password.length < 8) return { error: 'Password must be at least 8 characters' }
-
-    const admin = createAdminClient()
-
-    const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-        email,
-        password,
-        email_confirm: true,
-        user_metadata: { full_name: name },
-    })
-
-    if (createError) return { error: createError.message }
-
-    const { error: profileError } = await admin
-        .from('profiles')
-        .upsert({
-            id: newUser.user.id,
-            full_name: name,
-            role: 'learner',
-        }, { onConflict: 'id' })
-
-    if (profileError) return { error: profileError.message }
-
-    revalidatePath('/admin/students')
-    return { success: true, email }
-}
-
-/**
- * Generates an instructor invite link (no email, no DB storage).
+ * Generates an invite link (no email, no DB storage).
  * Uses a signed token (HMAC) so the server can verify it at claim time.
- * Admin shares the link; the instructor fills in their email + name + password.
+ * Admin shares the link; the invitee fills in their own email + name + password.
  */
-export async function inviteInstructor(_prevState: unknown, formData: FormData) {
+async function generateInviteLink(role: 'instructor' | 'learner') {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Not authenticated' }
@@ -135,17 +73,28 @@ export async function inviteInstructor(_prevState: unknown, formData: FormData) 
         .eq('id', user.id)
         .single()
 
-    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+    // Only admins can invite instructors; admins and instructors can invite students
+    if (role === 'instructor' && profile?.role !== 'admin') return { error: 'Unauthorized' }
+    if (role === 'learner' && !isStaff(profile?.role)) return { error: 'Unauthorized' }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-    const code = crypto.randomUUID()
+    // Embed the role in the code so the accept page knows what to create
+    const code = `${role}:${crypto.randomUUID()}`
     const sig = await signInviteCode(code)
 
     const link = `${appUrl}/auth/accept-invite?code=${code}&s=${sig}`
 
     revalidatePath('/admin/users')
     return { success: true, link }
+}
+
+export async function inviteInstructor(_prevState: unknown, _formData: FormData) {
+    return generateInviteLink('instructor')
+}
+
+export async function inviteStudentLink(_prevState: unknown, _formData: FormData) {
+    return generateInviteLink('learner')
 }
 
 // ─── Course Management ─────────────────────────────────────────
@@ -191,17 +140,17 @@ export async function createCourse(_prevState: unknown, formData: FormData) {
 export async function updateCourse(courseId: string, data: Record<string, unknown>) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('courses').update(data).eq('id', courseId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/courses')
     revalidatePath(`/admin/courses/${courseId}`)
@@ -217,14 +166,14 @@ export async function toggleCoursePublish(courseId: string, isPublished: boolean
 export async function createModule(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const title = formData.get('title') as string
     const courseId = formData.get('course_id') as string
@@ -259,17 +208,17 @@ export async function createModule(_prevState: unknown, formData: FormData) {
 export async function deleteModule(moduleId: string, courseId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('modules').delete().eq('id', moduleId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/courses/${courseId}`)
     return { success: true }
@@ -280,14 +229,14 @@ export async function deleteModule(moduleId: string, courseId: string) {
 export async function createQuiz(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const title = formData.get('title') as string
     const type = formData.get('type') as string
@@ -326,14 +275,14 @@ export async function createQuiz(_prevState: unknown, formData: FormData) {
 export async function addQuestion(quizId: string, question: string, options: { text: string; is_correct: boolean }[], explanation: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { data: last } = await supabase
         .from('quiz_questions')
@@ -352,7 +301,7 @@ export async function addQuestion(quizId: string, question: string, options: { t
         order_index: orderIndex,
     })
 
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/courses/*')
     revalidatePath('/admin/assessments')
@@ -367,14 +316,14 @@ export async function updateQuestion(questionId: string, data: {
 }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase
         .from('quiz_questions')
@@ -385,7 +334,7 @@ export async function updateQuestion(questionId: string, data: {
         })
         .eq('id', questionId)
 
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/assessments')
     revalidatePath('/admin/courses/*')
@@ -395,17 +344,17 @@ export async function updateQuestion(questionId: string, data: {
 export async function deleteQuestion(questionId: string, quizId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('quiz_questions').delete().eq('id', questionId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)
     revalidatePath('/admin/courses/*')
@@ -416,17 +365,17 @@ export async function deleteQuestion(questionId: string, quizId: string) {
 export async function updateQuiz(quizId: string, data: Record<string, unknown>) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('quizzes').update(data).eq('id', quizId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)
     revalidatePath('/admin/courses/*')
@@ -437,17 +386,17 @@ export async function updateQuiz(quizId: string, data: Record<string, unknown>) 
 export async function toggleQuizPublish(quizId: string, isPublished: boolean) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase.from('quizzes').update({ is_published: isPublished }).eq('id', quizId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/assessments')
     revalidatePath('/admin/courses/*')
@@ -459,14 +408,14 @@ export async function toggleQuizPublish(quizId: string, isPublished: boolean) {
 export async function generateQuizQuestions(quizId: string, count = 5, moduleIds?: string[]) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     // Fetch quiz and course info
     const { data: quiz } = await supabase
@@ -542,7 +491,7 @@ export async function generateQuizQuestions(quizId: string, count = 5, moduleIds
                 is_draft: true,
                 generated_by: 'ai',
             })
-            if (error) throw error
+            if (error) return { error: error.message }
         }
 
         revalidatePath(`/admin/quizzes/${quizId}`)
@@ -556,20 +505,20 @@ export async function generateQuizQuestions(quizId: string, count = 5, moduleIds
 export async function publishQuestion(questionId: string, quizId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase
         .from('quiz_questions')
         .update({ is_draft: false })
         .eq('id', questionId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)
     return { success: true }
@@ -578,21 +527,21 @@ export async function publishQuestion(questionId: string, quizId: string) {
 export async function publishAllQuestions(quizId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase
         .from('quiz_questions')
         .update({ is_draft: false })
         .eq('quiz_id', quizId)
         .eq('is_draft', true)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)
     revalidatePath('/admin/assessments')
@@ -602,20 +551,20 @@ export async function publishAllQuestions(quizId: string) {
 export async function unpublishQuestion(questionId: string, quizId: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase
         .from('quiz_questions')
         .update({ is_draft: true })
         .eq('id', questionId)
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)
     return { success: true }
@@ -629,7 +578,7 @@ export async function toggleLessonStatus(lessonId: string, isPublished: boolean)
 
     // Check if user is admin
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -638,7 +587,7 @@ export async function toggleLessonStatus(lessonId: string, isPublished: boolean)
         .single()
 
     if (profile?.role !== 'admin') {
-        throw new Error('Unauthorized: Admin access required')
+        return { error: 'Unauthorized: Admin access required' }
     }
 
     const { error } = await supabase
@@ -646,7 +595,7 @@ export async function toggleLessonStatus(lessonId: string, isPublished: boolean)
         .update({ is_published: isPublished })
         .eq('id', lessonId)
 
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/lessons')
     revalidatePath('/dashboard')
@@ -674,7 +623,7 @@ export async function createLesson(formData: CreateLessonInput) {
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -682,7 +631,7 @@ export async function createLesson(formData: CreateLessonInput) {
         .eq('id', user.id)
         .single()
 
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const { error } = await supabase
         .from('lessons')
@@ -697,7 +646,7 @@ export async function createLesson(formData: CreateLessonInput) {
             is_published: formData.is_published || false
         })
 
-    if (error) throw error
+    if (error) return { error: error.message }
 
     revalidatePath('/admin/lessons')
     revalidatePath('/dashboard')
@@ -713,7 +662,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
 
     // Auth check
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
@@ -721,7 +670,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
         .eq('id', user.id)
         .single()
 
-    if (!isStaff(profile?.role)) throw new Error('Unauthorized')
+    if (!isStaff(profile?.role)) return { error: 'Unauthorized' }
 
     const updatePayload: Record<string, unknown> = { status, score: score || 0 }
     if (feedback !== undefined) updatePayload.feedback = feedback
@@ -731,7 +680,7 @@ export async function reviewSubmission(submissionId: string, status: 'approved' 
         .update(updatePayload)
         .eq('id', submissionId)
 
-    if (error) throw error
+    if (error) return { error: error.message }
 
     // Fetch submission details for notification
     const { data: submission } = await supabase

@@ -96,27 +96,43 @@ export function LessonContent({ type, content }: LessonContentProps) {
             {resources && resources.length > 0 && (
                 <div className="space-y-3">
                     <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Additional resources</h3>
-                    <ul className="space-y-2">
+                    <div className="space-y-2">
                         {resources.map((r, i) => {
+                            const isYouTube = r.url?.includes('youtube.com/watch') || r.url?.includes('youtu.be/')
+                            if (r.type === 'video' && isYouTube) {
+                                const videoId = r.url?.includes('youtube.com/watch')
+                                    ? new URL(r.url).searchParams.get('v')
+                                    : r.url?.split('youtu.be/')[1]?.split('?')[0]
+                                const embedUrl = videoId ? `https://www.youtube.com/embed/${videoId}` : null
+                                if (embedUrl) {
+                                    return (
+                                        <div key={i} className="space-y-1">
+                                            <p className="text-xs font-medium text-muted-foreground">{r.title}</p>
+                                            <div className="aspect-video bg-black rounded-lg overflow-hidden border border-border/40">
+                                                <iframe src={embedUrl} className="w-full h-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen />
+                                            </div>
+                                        </div>
+                                    )
+                                }
+                            }
                             const Icon = resourceTypeIcon[r.type ?? ''] ?? ExternalLink
                             const label = resourceTypeLabel[r.type ?? ''] ?? 'Resource'
                             return (
-                                <li key={i}>
-                                    <a
-                                        href={r.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-border hover:bg-secondary/10 transition-colors group"
-                                    >
-                                        <Icon className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
-                                        <span className="flex-1 text-sm font-medium">{r.title}</span>
-                                        <Badge variant="outline" className="text-xs shrink-0">{label}</Badge>
-                                        <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />
-                                    </a>
-                                </li>
+                                <a
+                                    key={i}
+                                    href={r.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-3 p-3 rounded-lg border border-border/40 hover:border-border hover:bg-secondary/10 transition-colors group"
+                                >
+                                    <Icon className="w-4 h-4 text-muted-foreground shrink-0 group-hover:text-foreground transition-colors" />
+                                    <span className="flex-1 text-sm font-medium">{r.title}</span>
+                                    <Badge variant="outline" className="text-xs shrink-0">{label}</Badge>
+                                    <ExternalLink className="w-3 h-3 text-muted-foreground shrink-0" />
+                                </a>
                             )
                         })}
-                    </ul>
+                    </div>
                 </div>
             )}
 
