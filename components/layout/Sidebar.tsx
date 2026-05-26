@@ -1,5 +1,6 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { logout } from '@/app/(auth)/actions'
@@ -24,6 +25,8 @@ import {
     Award,
     HelpCircle,
     Calendar,
+    PanelLeftClose,
+    PanelLeftOpen,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
@@ -66,141 +69,83 @@ export function Sidebar({
     username = 'Learner',
 }: SidebarProps) {
     const pathname = usePathname()
+    const [collapsed, setCollapsed] = useState(false)
     const showStaffNav = isAdmin || isInstructor
 
+    function NavButton({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active?: boolean }) {
+        const isActive = active ?? (href === '/' ? pathname === href : pathname.startsWith(href))
+        return (
+            <Link href={href}>
+                <Button
+                    variant={isActive ? 'secondary' : 'ghost'}
+                    className={cn(
+                        'w-full justify-start gap-3 text-sm font-medium',
+                        collapsed ? 'px-0 justify-center' : '',
+                        isActive ? '' : 'text-muted-foreground hover:text-foreground'
+                    )}
+                    title={collapsed ? label : undefined}
+                >
+                    <Icon className="w-4 h-4 shrink-0" />
+                    {!collapsed && label}
+                </Button>
+            </Link>
+        )
+    }
+
     return (
-        <aside className="hidden md:flex flex-col w-64 min-h-screen border-r border-border/40 bg-card/30 p-4">
+        <aside className={cn(
+            'hidden md:flex flex-col min-h-screen border-r border-border/40 bg-card/30 p-4 transition-all duration-200',
+            collapsed ? 'w-16' : 'w-64'
+        )}>
             {/* Logo */}
-            <div className="mb-6 px-2">
-                <span className="text-lg font-bold tracking-tight">Academy</span>
-                <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
+            <div className={cn('mb-6 flex items-center', collapsed ? 'justify-center px-0' : 'px-2')}>
+                {!collapsed && (
+                    <>
+                        <span className="text-lg font-bold tracking-tight">Academy</span>
+                        <Badge variant="secondary" className="ml-2 text-xs">Beta</Badge>
+                    </>
+                )}
+                {collapsed && <span className="text-lg font-bold">A</span>}
             </div>
+
+            {/* Toggle */}
+            <button
+                onClick={() => setCollapsed(!collapsed)}
+                className={cn(
+                    'mb-4 flex items-center text-muted-foreground hover:text-foreground transition-colors',
+                    collapsed ? 'justify-center' : 'px-2'
+                )}
+                title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+            >
+                {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
+            </button>
 
             {/* Nav */}
             <nav className="flex-1 space-y-1">
-                {navItems.map((item) => {
-                    const active = pathname === item.href
-                    return (
-                        <Link key={item.href} href={item.href}>
-                            <Button
-                                variant={active ? 'secondary' : 'ghost'}
-                                className={cn(
-                                    'w-full justify-start gap-3 text-sm font-medium',
-                                    active ? '' : 'text-muted-foreground hover:text-foreground'
-                                )}
-                            >
-                                <item.icon className="w-4 h-4 shrink-0" />
-                                {item.label}
-                            </Button>
-                        </Link>
-                    )
-                })}
+                {navItems.map((item) => (
+                    <NavButton key={item.href} href={item.href} icon={item.icon} label={item.label} active={pathname === item.href} />
+                ))}
 
                 {showStaffNav && (
                     <>
-                        <div className="mt-6 mb-2 px-3">
-                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                                {isAdmin ? 'Admin Management' : 'Instructor'}
-                            </p>
-                        </div>
+                        {!collapsed && (
+                            <div className="mt-6 mb-2 px-3">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
+                                    {isAdmin ? 'Admin Management' : 'Instructor'}
+                                </p>
+                            </div>
+                        )}
+                        {collapsed && <div className="mt-4 mb-2 border-t border-border/40" />}
                         {isAdmin && (
                             <>
-                                <Link href="/admin">
-                                    <Button
-                                        variant={pathname === '/admin' ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname === '/admin' ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <Shield className="w-4 h-4 shrink-0" />
-                                        Overview
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/courses">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/courses') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/courses') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <BookOpen className="w-4 h-4 shrink-0" />
-                                        Courses
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/lessons">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/lessons') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/lessons') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <BookOpen className="w-4 h-4 shrink-0" />
-                                        Lessons
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/assessments">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/assessments') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/assessments') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <ClipboardCheck className="w-4 h-4 shrink-0" />
-                                        Assessments
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/users">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/users') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/users') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <Users className="w-4 h-4 shrink-0" />
-                                        Users
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/students">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/students') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/students') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <GraduationCap className="w-4 h-4 shrink-0" />
-                                        Students
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/submissions">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/submissions') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/submissions') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <Trophy className="w-4 h-4 shrink-0" />
-                                        Submissions
-                                    </Button>
-                                </Link>
-                                <Link href="/admin/analytics">
-                                    <Button
-                                        variant={pathname.startsWith('/admin/analytics') ? 'secondary' : 'ghost'}
-                                        className={cn(
-                                            'w-full justify-start gap-3 text-sm font-medium',
-                                            pathname.startsWith('/admin/analytics') ? '' : 'text-muted-foreground hover:text-foreground'
-                                        )}
-                                    >
-                                        <BarChart2 className="w-4 h-4 shrink-0" />
-                                        Analytics
-                                    </Button>
-                                </Link>
+                                <NavButton href="/admin" icon={Shield} label="Overview" />
+                                <NavButton href="/admin/courses" icon={BookOpen} label="Courses" />
+                                <NavButton href="/admin/lessons" icon={BookOpen} label="Lessons" />
+                                <NavButton href="/admin/assessments" icon={ClipboardCheck} label="Assessments" />
+                                <NavButton href="/admin/users" icon={Users} label="Users" />
+                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" />
+                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" />
+                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" />
                             </>
                         )}
                     </>
@@ -209,19 +154,23 @@ export function Sidebar({
 
             {/* User footer */}
             <Separator className="mb-3" />
-            <div className="flex items-center gap-3 px-2">
+            <div className={cn('flex items-center gap-3', collapsed ? 'justify-center' : 'px-2')}>
                 <Avatar className="w-8 h-8">
                     <AvatarImage src={avatarUrl} alt={username} />
                     <AvatarFallback className="text-xs">{userInitials}</AvatarFallback>
                 </Avatar>
-                <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium truncate">{username}</p>
-                </div>
-                <form action={logout}>
-                    <Button type="submit" variant="ghost" size="icon" className="shrink-0" title="Sign out">
-                        <LogOut className="w-4 h-4" />
-                    </Button>
-                </form>
+                {!collapsed && (
+                    <>
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{username}</p>
+                        </div>
+                        <form action={logout}>
+                            <Button type="submit" variant="ghost" size="icon" className="shrink-0" title="Sign out">
+                                <LogOut className="w-4 h-4" />
+                            </Button>
+                        </form>
+                    </>
+                )}
             </div>
         </aside>
     )
