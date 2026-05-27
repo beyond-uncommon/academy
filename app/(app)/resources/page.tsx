@@ -1,23 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { ExternalLink, Video, FileText, Link2, Figma, Code, BookOpen, Search } from 'lucide-react'
+import { Search } from 'lucide-react'
 import { ResourceFilters } from './components/ResourceFilters'
+import { ResourceCard } from './components/ResourceCard'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Resources' }
-
-const resourceTypeConfig: Record<string, { icon: any; color: string }> = {
-  video: { icon: Video, color: 'text-red-500' },
-  article: { icon: FileText, color: 'text-blue-500' },
-  figma: { icon: Figma, color: 'text-purple-500' },
-  link: { icon: Link2, color: 'text-cyan-500' },
-  code: { icon: Code, color: 'text-green-500' },
-  book: { icon: BookOpen, color: 'text-amber-500' },
-  template: { icon: FileText, color: 'text-pink-500' },
-  tool: { icon: Link2, color: 'text-slate-500' },
-}
 
 export default async function ResourcesPage(props: {
   searchParams?: Promise<{ type?: string; q?: string }>
@@ -135,38 +123,19 @@ export default async function ResourcesPage(props: {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          {resources.map((r, i) => {
-            const cfg = resourceTypeConfig[r.type] || { icon: Link2, color: 'text-muted-foreground' }
-            const Icon = cfg.icon
-            return (
-              <a
-                key={`${r.url}-${i}`}
-                href={r.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <Card className="border-border/40 hover:border-border/80 hover:bg-muted/30 transition-all h-full">
-                  <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-8 h-8 rounded bg-secondary/20 flex items-center justify-center shrink-0 mt-0.5">
-                        <Icon className={`w-4 h-4 ${cfg.color}`} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">{r.title}</p>
-                        <p className="text-xs text-muted-foreground truncate mt-0.5">{r.url}</p>
-                        <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground">
-                          <span>{r.lessonTitle}</span>
-                          {r.moduleTitle && <><span>·</span><span>{r.moduleTitle}</span></>}
-                        </div>
-                      </div>
-                      <ExternalLink className="w-3.5 h-3.5 text-muted-foreground shrink-0 mt-1" />
-                    </div>
-                  </CardContent>
-                </Card>
-              </a>
-            )
-          })}
+          {resources.map((r, i) => (
+            <ResourceCard
+              key={`${r.url}-${i}`}
+              resource={{
+                title: r.title,
+                url: r.url,
+                type: r.type,
+                lessonTitle: r.lessonTitle,
+                moduleTitle: r.moduleTitle,
+                courseTitle: r.courseTitle,
+              }}
+            />
+          ))}
         </div>
       )}
     </div>
