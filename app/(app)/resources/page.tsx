@@ -69,10 +69,14 @@ export default async function ResourcesPage(props: {
     }
   }
 
-  // Filter by type
-  if (activeType !== 'all') {
-    resources = resources.filter((r) => r.type === activeType)
+  const typeOrder = ['video', 'article', 'figma', 'template', 'book', 'code', 'tool', 'link']
+
+  // Compute total counts from all resources (tabs always show)
+  const totalCounts: Record<string, number> = {}
+  for (const r of resources) {
+    totalCounts[r.type] = (totalCounts[r.type] || 0) + 1
   }
+  const allTypes = ['all', ...typeOrder.filter((t) => totalCounts[t])]
 
   // Filter by search query
   if (query) {
@@ -85,14 +89,21 @@ export default async function ResourcesPage(props: {
     )
   }
 
-  // Counts for tabs
+  // Compute search-filtered counts for tab badges
   const typeCounts: Record<string, number> = {}
   for (const r of resources) {
     typeCounts[r.type] = (typeCounts[r.type] || 0) + 1
   }
+  // Ensure all known types appear in typeCounts (even if 0), and add total for "All"
+  typeCounts.all = resources.length
+  for (const t of typeOrder) {
+    if (typeCounts[t] === undefined) typeCounts[t] = 0
+  }
 
-  const typeOrder = ['video', 'article', 'figma', 'template', 'book', 'code', 'tool', 'link']
-  const allTypes = ['all', ...typeOrder.filter((t) => typeCounts[t])]
+  // Filter by type
+  if (activeType !== 'all') {
+    resources = resources.filter((r) => r.type === activeType)
+  }
 
   return (
     <div className="max-w-5xl mx-auto space-y-6">
