@@ -7,11 +7,19 @@ import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { Loader2, Camera, Check } from 'lucide-react'
-import { updateProfile } from '../actions'
+import { Loader2, Camera, Check, Trash2, AlertTriangle } from 'lucide-react'
+import { updateProfile, deleteAccount } from '../actions'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogDescription,
+    DialogTrigger,
+} from '@/components/ui/dialog'
 
 interface SettingsFormProps {
     initialData: {
@@ -25,6 +33,8 @@ interface SettingsFormProps {
 export function SettingsForm({ initialData }: SettingsFormProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState(initialData)
+    const [deleteOpen, setDeleteOpen] = useState(false)
+    const [deleteLoading, setDeleteLoading] = useState(false)
     const router = useRouter()
     const { theme, setTheme } = useTheme()
 
@@ -140,6 +150,86 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                                 </button>
                             ))}
                         </div>
+                    </div>
+                </CardContent>
+            </Card>
+
+            <Card className="border-destructive/30">
+                <CardHeader>
+                    <CardTitle className="text-destructive">Danger Zone</CardTitle>
+                    <CardDescription>Irreversible actions that affect your account.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-center justify-between">
+                        <div className="space-y-0.5">
+                            <Label>Delete Account</Label>
+                            <p className="text-xs text-muted-foreground">
+                                Permanently removes your account, profile, submissions, progress, and all associated data.
+                            </p>
+                        </div>
+                        <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
+                            <DialogTrigger asChild>
+                                <Button type="button" variant="destructive" size="sm" className="gap-2 shrink-0">
+                                    <Trash2 className="w-4 h-4" />
+                                    Delete Account
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[420px]">
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2 text-destructive">
+                                        <AlertTriangle className="w-5 h-5" />
+                                        Delete Account
+                                    </DialogTitle>
+                                    <DialogDescription>
+                                        This action cannot be undone. All your data — including projects, progress, badges, and certificates — will be permanently deleted.
+                                    </DialogDescription>
+                                </DialogHeader>
+                                <div className="space-y-4">
+                                    <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3">
+                                        <p className="text-xs text-destructive font-medium">
+                                            Are you sure you want to proceed?
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-2 justify-end">
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setDeleteOpen(false)}
+                                            disabled={deleteLoading}
+                                        >
+                                            Cancel
+                                        </Button>
+                                        <Button
+                                            type="button"
+                                            variant="destructive"
+                                            size="sm"
+                                            className="gap-2"
+                                            disabled={deleteLoading}
+                                            onClick={async () => {
+                                                setDeleteLoading(true)
+                                                const res = await deleteAccount()
+                                                if (res.success) {
+                                                    router.push('/')
+                                                    router.refresh()
+                                                } else {
+                                                    toast.error(res.error || 'Failed to delete account')
+                                                    setDeleteLoading(false)
+                                                    setDeleteOpen(false)
+                                                }
+                                            }}
+                                        >
+                                            {deleteLoading ? (
+                                                <Loader2 className="w-4 h-4 animate-spin" />
+                                            ) : (
+                                                <Trash2 className="w-4 h-4" />
+                                            )}
+                                            Permanently Delete
+                                        </Button>
+                                    </div>
+                                </div>
+                            </DialogContent>
+                        </Dialog>
                     </div>
                 </CardContent>
             </Card>

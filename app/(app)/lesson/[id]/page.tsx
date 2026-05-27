@@ -81,9 +81,9 @@ export default async function LessonPage({
     return (
         <div className="max-w-4xl mx-auto space-y-6">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Link href="/dashboard" className="hover:text-foreground flex items-center gap-1">
+                <Link href={`/module/${lesson.module_id}`} className="hover:text-foreground flex items-center gap-1">
                     <ChevronLeft className="w-4 h-4" />
-                    Dashboard
+                    {moduleTitle}
                 </Link>
                 <span>/</span>
                 <span className="truncate max-w-[150px]">{courseTitle}</span>

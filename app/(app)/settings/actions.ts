@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -42,5 +42,24 @@ export async function updateProfile(formData: {
     revalidatePath('/settings')
     revalidatePath('/dashboard')
 
+    return { success: true }
+}
+
+/**
+ * Permanently deletes the authenticated user's account and all associated data.
+ */
+export async function deleteAccount() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    const admin = createAdminClient()
+    const { error } = await admin.auth.admin.deleteUser(user.id)
+    if (error) return { error: error.message }
+
+    await supabase.auth.signOut()
+
+    revalidatePath('/')
     return { success: true }
 }
