@@ -202,9 +202,18 @@ export interface CommunityPost {
   title: string
   content: string
   type: 'question' | 'discussion' | 'tip' | 'showcase'
+  votes: number
   created_at: string
   profile?: Pick<Profile, 'full_name' | 'avatar_url' | 'username'>
-  likes?: { count: number; liked: boolean }
+  userVote?: number
+  commentCount?: number
+}
+
+export interface PostVote {
+  user_id: string
+  post_id: string
+  vote: number
+  created_at: string
 }
 
 export interface PostLike {

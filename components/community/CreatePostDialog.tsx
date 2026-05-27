@@ -37,16 +37,21 @@ export function CreatePostDialog() {
   async function handleSubmit() {
     if (!title.trim() || !content.trim()) return
     setSaving(true)
-    try {
-      await createPost({ title, content, type })
-      toast.success('Post created!')
-      setOpen(false)
-      setTitle('')
-      setContent('')
-      setType('discussion')
+    const res = await createPost({ title, content, type })
+    if (res.error) {
+      toast.error(res.error)
+      setSaving(false)
+      return
+    }
+    toast.success('Post created!')
+    setOpen(false)
+    setTitle('')
+    setContent('')
+    setType('discussion')
+    if (res.postId) {
+      router.push(`/community/post/${res.postId}`)
+    } else {
       router.refresh()
-    } catch (e: any) {
-      toast.error(e.message || 'Failed to create post')
     }
     setSaving(false)
   }
