@@ -137,7 +137,7 @@ export async function createCourse(_prevState: unknown, formData: FormData) {
     return { success: true }
 }
 
-export async function updateCourse(courseId: string, data: Record<string, unknown>) {
+export async function updateCourse(courseId: string, data: { title?: string; slug?: string; description?: string; type?: string; phase?: number; is_published?: boolean }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Not authenticated' }
@@ -149,7 +149,15 @@ export async function updateCourse(courseId: string, data: Record<string, unknow
         .single()
     if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-    const { error } = await supabase.from('courses').update(data).eq('id', courseId)
+    const allowed = {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.slug !== undefined && { slug: data.slug }),
+        ...(data.description !== undefined && { description: data.description }),
+        ...(data.type !== undefined && { type: data.type }),
+        ...(data.phase !== undefined && { phase: data.phase }),
+        ...(data.is_published !== undefined && { is_published: data.is_published }),
+    }
+    const { error } = await supabase.from('courses').update(allowed).eq('id', courseId)
     if (error) return { error: error.message }
 
     revalidatePath('/admin/courses')
@@ -362,7 +370,7 @@ export async function deleteQuestion(questionId: string, quizId: string) {
     return { success: true }
 }
 
-export async function updateQuiz(quizId: string, data: Record<string, unknown>) {
+export async function updateQuiz(quizId: string, data: { title?: string; type?: string; xp_base?: number; xp_bonus_80?: number; xp_bonus_100?: number; time_limit_minutes?: number | null; passing_score_pct?: number; max_attempts?: number; instructions?: string | null; is_published?: boolean }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { error: 'Not authenticated' }
@@ -374,7 +382,19 @@ export async function updateQuiz(quizId: string, data: Record<string, unknown>) 
         .single()
     if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
-    const { error } = await supabase.from('quizzes').update(data).eq('id', quizId)
+    const allowed = {
+        ...(data.title !== undefined && { title: data.title }),
+        ...(data.type !== undefined && { type: data.type }),
+        ...(data.xp_base !== undefined && { xp_base: data.xp_base }),
+        ...(data.xp_bonus_80 !== undefined && { xp_bonus_80: data.xp_bonus_80 }),
+        ...(data.xp_bonus_100 !== undefined && { xp_bonus_100: data.xp_bonus_100 }),
+        ...(data.time_limit_minutes !== undefined && { time_limit_minutes: data.time_limit_minutes }),
+        ...(data.passing_score_pct !== undefined && { passing_score_pct: data.passing_score_pct }),
+        ...(data.max_attempts !== undefined && { max_attempts: data.max_attempts }),
+        ...(data.instructions !== undefined && { instructions: data.instructions }),
+        ...(data.is_published !== undefined && { is_published: data.is_published }),
+    }
+    const { error } = await supabase.from('quizzes').update(allowed).eq('id', quizId)
     if (error) return { error: error.message }
 
     revalidatePath(`/admin/quizzes/${quizId}`)

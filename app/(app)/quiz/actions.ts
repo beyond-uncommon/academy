@@ -457,5 +457,13 @@ export async function getAssessmentById(quizId: string) {
         .eq('id', quizId)
         .single()
 
-    return quiz
+    if (!quiz) return null
+
+    return {
+        ...quiz,
+        questions: quiz.questions?.map((q: any) => ({
+            ...q,
+            options: q.options?.map((o: any) => ({ text: o.text })),
+        })),
+    }
 }

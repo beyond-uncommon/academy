@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
-    // TODO Week 2: implement full progress update + skill tree calculation
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { userId, lessonId } = await request.json()
 
     if (!userId || !lessonId) {
         return NextResponse.json({ error: 'Missing userId or lessonId' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    if (userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { error } = await supabase
         .from('user_progress')

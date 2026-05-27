@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
 export async function POST(request: Request) {
-    // TODO Week 2: implement full XP award logic
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
     const { userId, xpAmount, source } = await request.json()
 
     if (!userId || !xpAmount) {
         return NextResponse.json({ error: 'Missing userId or xpAmount' }, { status: 400 })
     }
 
-    const supabase = await createClient()
+    if (userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
     const { error } = await supabase.rpc('award_xp', {
         p_user_id: userId,

@@ -4,6 +4,11 @@ import { sendStreakReminderEmail } from '@/lib/email'
 export const maxDuration = 300
 
 export async function POST(request: Request) {
+  const cronSecret = process.env.CRON_SECRET
+  if (!cronSecret || request.headers.get('Authorization') !== `Bearer ${cronSecret}`) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const supabase = createAdminClient()
     
