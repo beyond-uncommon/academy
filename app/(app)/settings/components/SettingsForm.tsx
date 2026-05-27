@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -9,6 +9,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Loader2, Camera, Check, Trash2, AlertTriangle } from 'lucide-react'
 import { updateProfile, deleteAccount } from '../actions'
+import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
@@ -22,6 +23,7 @@ import {
 } from '@/components/ui/dialog'
 
 interface SettingsFormProps {
+    userId: string
     initialData: {
         full_name: string | null
         username: string | null
@@ -30,11 +32,13 @@ interface SettingsFormProps {
     }
 }
 
-export function SettingsForm({ initialData }: SettingsFormProps) {
+export function SettingsForm({ userId, initialData }: SettingsFormProps) {
     const [loading, setLoading] = useState(false)
     const [formData, setFormData] = useState(initialData)
     const [deleteOpen, setDeleteOpen] = useState(false)
     const [deleteLoading, setDeleteLoading] = useState(false)
+    const [uploading, setUploading] = useState(false)
+    const fileInputRef = useRef<HTMLInputElement>(null)
     const router = useRouter()
     const { theme, setTheme } = useTheme()
 
@@ -66,7 +70,7 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                     <CardDescription>Update your public identity on the platform.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
-                    {/* Avatar Upload Placeholder */}
+                    {/* Avatar Upload */}
                     <div className="flex items-center gap-6">
                         <div className="relative group">
                             <Avatar className="w-20 h-20 border">
@@ -75,13 +79,60 @@ export function SettingsForm({ initialData }: SettingsFormProps) {
                                     {formData.full_name?.charAt(0) || 'U'}
                                 </AvatarFallback>
                             </Avatar>
-                            <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
-                                <Camera className="w-6 h-6 text-white" />
-                            </div>
+                            <button
+                                type="button"
+                                disabled={uploading}
+                                onClick={() => fileInputRef.current?.click()}
+                                className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer disabled:opacity-50"
+                            >
+                                {uploading ? (
+                                    <Loader2 className="w-6 h-6 text-white animate-spin" />
+                                ) : (
+                                    <Camera className="w-6 h-6 text-white" />
+                                )}
+                            </button>
+                            <input
+                                ref={fileInputRef}
+                                type="file"
+                                accept="image/*"
+                                hidden
+                                onChange={async (e) => {
+                                    const file = e.target.files?.[0]
+                                    if (!file) return
+
+                                    if (file.size > 2 * 1024 * 1024) {
+                                        toast.error('Image must be under 2MB')
+                                        return
+                                    }
+
+                                    setUploading(true)
+                                    const supabase = createClient()
+                                    const ext = file.name.split('.').pop()
+                                    const filePath = `${userId}/avatar.${ext}`
+
+                                    const { error: uploadError } = await supabase.storage
+                                        .from('avatars')
+                                        .upload(filePath, file, { upsert: true })
+
+                                    if (uploadError) {
+                                        toast.error(uploadError.message)
+                                        setUploading(false)
+                                        return
+                                    }
+
+                                    const { data: { publicUrl } } = supabase.storage
+                                        .from('avatars')
+                                        .getPublicUrl(filePath)
+
+                                    setFormData({ ...formData, avatar_url: publicUrl })
+                                    setUploading(false)
+                                    toast.success('Avatar uploaded')
+                                }}
+                            />
                         </div>
                         <div className="space-y-1">
                             <p className="text-sm font-medium">Profile Picture</p>
-                            <p className="text-xs text-muted-foreground">Click to upload a new avatar (Coming soon)</p>
+                            <p className="text-xs text-muted-foreground">Click the camera icon to upload</p>
                         </div>
                     </div>
 

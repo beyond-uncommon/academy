@@ -27,7 +27,7 @@ export default async function SettingsPage() {
                 <p className="text-muted-foreground mt-1">Manage your account settings and preferences.</p>
             </div>
 
-            <SettingsForm initialData={profile || { full_name: '', username: '', bio: '', avatar_url: '' }} />
+            <SettingsForm userId={user.id} initialData={profile || { full_name: '', username: '', bio: '', avatar_url: '' }} />
         </div>
     )
 }
