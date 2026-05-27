@@ -11,7 +11,7 @@ import type { Metadata } from 'next'
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params
     const supabase = await createClient()
-    const { data: course } = await supabase.from('courses').select('title').eq('slug', slug).single()
+    const { data: course } = await supabase.from('courses').select('title').eq('slug', slug).maybeSingle()
     return { title: course?.title || 'Course' } satisfies Metadata
 }
 

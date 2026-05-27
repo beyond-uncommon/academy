@@ -30,7 +30,9 @@ async function markAsRead(formData: FormData) {
     const notificationId = formData.get('id') as string
     if (!notificationId) return
     const supabase = await createClient()
-    await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId)
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('notifications').update({ is_read: true }).eq('id', notificationId).eq('user_id', user.id)
 }
 
 async function markAllAsRead() {

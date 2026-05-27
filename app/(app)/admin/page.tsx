@@ -1,9 +1,10 @@
 import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Badge } from '@/components/ui/badge'
 import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck, GraduationCap } from 'lucide-react'
 import type { Metadata } from 'next'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { InviteInstructorDialog } from './components/InviteInstructorDialog'
 
@@ -25,7 +26,24 @@ export default async function AdminPage() {
     const isInstructor = profile?.role === 'instructor'
     if (!isAdmin && !isInstructor) redirect('/dashboard')
 
-    const adminSections = [
+    const admin = createAdminClient()
+
+    // Pending reviews count (for both admin and instructor)
+    const { count: pendingCount } = await admin
+        .from('project_submissions')
+        .select('*', { count: 'exact', head: true })
+        .eq('status', 'pending')
+
+    interface AdminSection {
+        href: string
+        icon: any
+        title: string
+        description: string
+        adminOnly: boolean
+        badge?: number | null
+    }
+
+    const adminSections: AdminSection[] = [
         {
             href: '/admin/courses',
             icon: BookOpen,
@@ -60,6 +78,7 @@ export default async function AdminPage() {
             title: 'Project Reviews',
             description: 'Review and approve student project submissions.',
             adminOnly: false,
+            badge: pendingCount,
         },
         {
             href: '/admin/signup',
@@ -68,7 +87,7 @@ export default async function AdminPage() {
             description: 'Create a new admin account with immediate access.',
             adminOnly: true,
         },
-    ] as const
+    ]
 
     const visible = adminSections.filter((s) => isAdmin || !s.adminOnly)
 
@@ -98,7 +117,14 @@ export default async function AdminPage() {
                 {visible.map((s) => (
                     <Card key={s.href} className="border-border/40 hover:border-border/80 transition-colors">
                         <CardHeader className="pb-2">
-                            <s.icon className="w-5 h-5 text-primary mb-1" />
+                            <div className="flex items-center justify-between">
+                                <s.icon className="w-5 h-5 text-primary mb-1" />
+                                {s.badge != null && s.badge > 0 && (
+                                    <Badge variant="default" className="text-xs">
+                                        {s.badge} pending
+                                    </Badge>
+                                )}
+                            </div>
                             <CardTitle className="text-sm">{s.title}</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">

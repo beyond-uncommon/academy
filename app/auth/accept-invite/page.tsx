@@ -20,12 +20,12 @@ function SubmitButton() {
     )
 }
 
-function useRole(code: string): 'instructor' | 'learner' {
+function useRole(code: string): 'instructor' | 'learner' | null {
     const parts = code.split(':')
     if (parts.length === 2 && (parts[0] === 'instructor' || parts[0] === 'learner')) {
         return parts[0]
     }
-    return 'instructor'
+    return null
 }
 
 function AcceptInviteForm() {
@@ -33,7 +33,7 @@ function AcceptInviteForm() {
     const code = searchParams.get('code') || ''
     const sig = searchParams.get('s') || ''
     const role = useRole(code)
-    const [state, formAction] = useActionState(completeInstructorSetup, null) as any
+    const [state, formAction] = useActionState(completeInstructorSetup, null)
 
     useEffect(() => {
         if (state?.error) toast.error(state.error)
@@ -47,6 +47,21 @@ function AcceptInviteForm() {
                         <CardTitle>Invalid Link</CardTitle>
                         <CardDescription>
                             This invite link is missing the invite code. Please contact your admin for a new one.
+                        </CardDescription>
+                    </CardHeader>
+                </Card>
+            </div>
+        )
+    }
+
+    if (!role) {
+        return (
+            <div className="flex items-center justify-center min-h-screen p-4">
+                <Card className="w-full max-w-md">
+                    <CardHeader>
+                        <CardTitle>Invalid Invite</CardTitle>
+                        <CardDescription>
+                            The invite format is not recognized. Please ask your admin for a new invite link.
                         </CardDescription>
                     </CardHeader>
                 </Card>

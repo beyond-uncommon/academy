@@ -49,8 +49,8 @@ export async function getComments(target: { lesson_id?: string; submission_id?: 
 export async function addComment(target: { lesson_id?: string; submission_id?: string; post_id?: string }, content: string, parentId?: string) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
-  if (!content.trim()) throw new Error('Comment cannot be empty')
+  if (!user) return { error: 'Not authenticated' }
+  if (!content.trim()) return { error: 'Comment cannot be empty' }
 
   const payload: Record<string, unknown> = {
     user_id: user.id,
@@ -62,7 +62,7 @@ export async function addComment(target: { lesson_id?: string; submission_id?: s
   if (target.post_id) payload.post_id = target.post_id
 
   const { error } = await supabase.from('lesson_comments').insert(payload)
-  if (error) throw error
+  if (error) return { error: error.message }
 
   if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
   if (target.submission_id || target.post_id) revalidatePath('/community')
@@ -73,7 +73,7 @@ export async function addComment(target: { lesson_id?: string; submission_id?: s
 export async function deleteComment(commentId: string, target: { lesson_id?: string; submission_id?: string; post_id?: string }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
-  if (!user) throw new Error('Not authenticated')
+  if (!user) return { error: 'Not authenticated' }
 
   const { error } = await supabase
     .from('lesson_comments')
@@ -81,7 +81,7 @@ export async function deleteComment(commentId: string, target: { lesson_id?: str
     .eq('id', commentId)
     .eq('user_id', user.id)
 
-  if (error) throw error
+  if (error) return { error: error.message }
 
   if (target.lesson_id) revalidatePath(`/lesson/${target.lesson_id}`)
   if (target.submission_id || target.post_id) revalidatePath('/community')

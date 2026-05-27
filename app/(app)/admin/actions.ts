@@ -102,14 +102,14 @@ export async function inviteStudentLink(_prevState: unknown, _formData: FormData
 export async function createCourse(_prevState: unknown, formData: FormData) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
     const { data: profile } = await supabase
         .from('profiles')
         .select('role')
         .eq('id', user.id)
         .single()
-    if (profile?.role !== 'admin') throw new Error('Unauthorized')
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
 
     const title = formData.get('title') as string
     const description = formData.get('description') as string

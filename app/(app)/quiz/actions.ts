@@ -14,101 +14,97 @@ export async function submitQuiz(
 ) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) throw new Error('Not authenticated')
+    if (!user) return { error: 'Not authenticated' }
 
-    try {
-        const { data: quiz } = await supabase
-            .from('quizzes')
-            .select('*, questions:quiz_questions(*)')
-            .eq('id', quizId)
-            .single()
+    const { data: quiz, error: quizError } = await supabase
+        .from('quizzes')
+        .select('*, questions:quiz_questions(*)')
+        .eq('id', quizId)
+        .maybeSingle()
 
-        if (!quiz) throw new Error('Quiz not found')
+    if (quizError || !quiz) return { error: quizError?.message || 'Quiz not found' }
 
-        const { data: xpBefore } = await supabase
-            .from('user_xp')
-            .select('rank')
+    const { data: xpBefore } = await supabase
+        .from('user_xp')
+        .select('rank')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+    let correctCount = 0
+    const totalQuestions = quiz.questions.length
+
+    quiz.questions.forEach((q: any) => {
+        const userAnswer = userAnswers[q.id]
+        const correctIndex = (q.options as Array<{ text: string; is_correct: boolean }>)
+            .findIndex(o => o.is_correct)
+        if (userAnswer === correctIndex) correctCount++
+    })
+
+    const scorePct = Math.round((correctCount / totalQuestions) * 100)
+    const xpEarned = calculateQuizXP(scorePct, quiz.xp_base, quiz.xp_bonus_80, quiz.xp_bonus_100)
+
+    const { error: insertError } = await supabase.from('user_quiz_attempts').insert({
+        user_id: user.id,
+        quiz_id: quizId,
+        score_pct: scorePct,
+        xp_earned: xpEarned,
+        answers: userAnswers,
+        passed: scorePct >= (quiz.passing_score_pct || 80),
+        attempt_number: 1,
+    })
+    if (insertError) return { error: insertError.message }
+
+    if (xpEarned > 0) {
+        await supabase.rpc('award_xp', { p_user_id: user.id, p_xp: xpEarned })
+    }
+
+    if (quiz.lesson_id) {
+        await supabase
+            .from('user_progress')
+            .upsert(
+                { user_id: user.id, lesson_id: quiz.lesson_id, completed: true, completed_at: new Date().toISOString(), xp_earned: xpEarned },
+                { onConflict: 'user_id,lesson_id' }
+            )
+    }
+
+    await updateStreak(user.id)
+
+    const { data: xpAfter } = await supabase
+        .from('user_xp')
+        .select('rank')
+        .eq('user_id', user.id)
+        .maybeSingle()
+
+    const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
+
+    if (scorePct === 100) {
+        const { data: aceBadge } = await supabase
+            .from('user_badges')
+            .select('*')
             .eq('user_id', user.id)
-            .single()
+            .eq('badge_id', 'quiz_ace')
+            .maybeSingle()
 
-        let correctCount = 0
-        const totalQuestions = quiz.questions.length
-
-        quiz.questions.forEach((q: any) => {
-            const userAnswer = userAnswers[q.id]
-            const correctIndex = (q.options as Array<{ text: string; is_correct: boolean }>)
-                .findIndex(o => o.is_correct)
-            if (userAnswer === correctIndex) correctCount++
-        })
-
-        const scorePct = Math.round((correctCount / totalQuestions) * 100)
-        const xpEarned = calculateQuizXP(scorePct, quiz.xp_base, quiz.xp_bonus_80, quiz.xp_bonus_100)
-
-        await supabase.from('user_quiz_attempts').insert({
-            user_id: user.id,
-            quiz_id: quizId,
-            score_pct: scorePct,
-            xp_earned: xpEarned,
-            answers: userAnswers,
-            passed: scorePct >= (quiz.passing_score_pct || 80),
-            attempt_number: 1,
-        })
-
-        if (xpEarned > 0) {
-            await supabase.rpc('award_xp', { p_user_id: user.id, p_xp: xpEarned })
+        if (!aceBadge) {
+            await supabase.from('user_badges').insert({
+                user_id: user.id,
+                badge_id: 'quiz_ace'
+            })
         }
+    }
 
-        if (quiz.lesson_id) {
-            await supabase
-                .from('user_progress')
-                .upsert(
-                    { user_id: user.id, lesson_id: quiz.lesson_id, completed: true, completed_at: new Date().toISOString(), xp_earned: xpEarned },
-                    { onConflict: 'user_id,lesson_id' }
-                )
-        }
+    revalidatePath('/dashboard')
+    revalidatePath('/profile')
+    if (quiz.lesson_id) revalidatePath(`/lesson/${quiz.lesson_id}`)
 
-        await updateStreak(user.id)
-
-        const { data: xpAfter } = await supabase
-            .from('user_xp')
-            .select('rank')
-            .eq('user_id', user.id)
-            .single()
-
-        const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
-
-        if (scorePct === 100) {
-            const { data: aceBadge } = await supabase
-                .from('user_badges')
-                .select('*')
-                .eq('user_id', user.id)
-                .eq('badge_id', 'quiz_ace')
-                .single()
-
-            if (!aceBadge) {
-                await supabase.from('user_badges').insert({
-                    user_id: user.id,
-                    badge_id: 'quiz_ace'
-                })
-            }
-        }
-
-        revalidatePath('/dashboard')
-        revalidatePath('/profile')
-        if (quiz.lesson_id) revalidatePath(`/lesson/${quiz.lesson_id}`)
-
-        return {
-            success: true,
-            scorePct,
-            xpEarned,
-            correctCount,
-            totalQuestions,
-            rankUp,
-            passed: scorePct >= (quiz.passing_score_pct || 80),
-        }
-    } catch (error: any) {
-        console.error('Error submitting quiz:', error)
-        return { success: false, error: error.message }
+    return {
+        success: true,
+        scorePct,
+        xpEarned,
+        correctCount,
+        totalQuestions,
+        rankUp,
+        passed: scorePct >= (quiz.passing_score_pct || 80),
     }
 }
 

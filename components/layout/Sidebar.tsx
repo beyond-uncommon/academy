@@ -59,6 +59,7 @@ interface SidebarProps {
     userInitials?: string
     avatarUrl?: string
     username?: string
+    pendingReviewCount?: number
 }
 
 export function Sidebar({
@@ -67,19 +68,20 @@ export function Sidebar({
     userInitials = 'U',
     avatarUrl,
     username = 'Learner',
+    pendingReviewCount,
 }: SidebarProps) {
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
     const showStaffNav = isAdmin || isInstructor
 
-    function NavButton({ href, icon: Icon, label, active }: { href: string; icon: any; label: string; active?: boolean }) {
+    function NavButton({ href, icon: Icon, label, active, badge }: { href: string; icon: any; label: string; active?: boolean; badge?: number }) {
         const isActive = active ?? (href === '/' ? pathname === href : pathname.startsWith(href))
         return (
             <Link href={href}>
                 <Button
                     variant={isActive ? 'secondary' : 'ghost'}
                     className={cn(
-                        'w-full justify-start gap-3 text-sm font-medium',
+                        'w-full justify-start gap-3 text-sm font-medium relative',
                         collapsed ? 'px-0 justify-center' : '',
                         isActive ? '' : 'text-muted-foreground hover:text-foreground'
                     )}
@@ -87,6 +89,14 @@ export function Sidebar({
                 >
                     <Icon className="w-4 h-4 shrink-0" />
                     {!collapsed && label}
+                    {badge != null && badge > 0 && (
+                        <span className={cn(
+                            'flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-primary text-primary-foreground',
+                            collapsed ? 'absolute -top-1 -right-1' : 'ml-auto'
+                        )}>
+                            {badge > 99 ? '99+' : badge}
+                        </span>
+                    )}
                 </Button>
             </Link>
         )
@@ -144,7 +154,15 @@ export function Sidebar({
                                 <NavButton href="/admin/assessments" icon={ClipboardCheck} label="Assessments" />
                                 <NavButton href="/admin/users" icon={Users} label="Users" />
                                 <NavButton href="/admin/students" icon={GraduationCap} label="Students" />
-                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" />
+                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} />
+                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" />
+                            </>
+                        )}
+                        {isInstructor && (
+                            <>
+                                <NavButton href="/admin" icon={Shield} label="Overview" />
+                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" />
+                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} />
                                 <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" />
                             </>
                         )}

@@ -1,8 +1,9 @@
 'use client'
 
 import Link from 'next/link'
-import { useActionState, useEffect } from 'react'
+import { useActionState, useEffect, Suspense } from 'react'
 import { useFormStatus } from 'react-dom'
+import { useSearchParams } from 'next/navigation'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -19,7 +20,29 @@ function SubmitButton() {
     )
 }
 
-export default function LoginPage() {
+function SearchParamsWatcher() {
+    const searchParams = useSearchParams()
+
+    useEffect(() => {
+        const error = searchParams.get('error')
+        const demo = searchParams.get('demo')
+        const msg: Record<string, string> = {
+            invalid_link: 'Invalid or expired confirmation link. Please sign up again.',
+            link_expired: 'This confirmation link has expired. Sign up again to get a new one.',
+            already_confirmed: 'This email is already confirmed. Sign in with your password.',
+        }
+        if (error && msg[error]) {
+            toast.error(msg[error])
+        }
+        if (demo === 'unavailable') {
+            toast.error('Demo account is not configured.')
+        }
+    }, [searchParams])
+
+    return null
+}
+
+function LoginForm() {
     const [state, formAction] = useActionState(login, null)
 
     useEffect(() => {
@@ -76,3 +99,11 @@ export default function LoginPage() {
     )
 }
 
+export default function LoginPage() {
+    return (
+        <Suspense>
+            <SearchParamsWatcher />
+            <LoginForm />
+        </Suspense>
+    )
+}

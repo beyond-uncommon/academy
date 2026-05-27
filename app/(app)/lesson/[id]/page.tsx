@@ -55,7 +55,7 @@ export default async function LessonPage({
         .select('*')
         .eq('user_id', user.id)
         .eq('lesson_id', id)
-        .single()
+        .maybeSingle()
 
     const isCompleted = !!progress?.completed
     const courseTitle = (lesson.module as any)?.course?.title || 'Unknown Course'
@@ -66,7 +66,7 @@ export default async function LessonPage({
         .from('quizzes')
         .select('*, questions:quiz_questions(*)')
         .eq('lesson_id', id)
-        .single()
+        .maybeSingle()
 
     // Only published questions shown to learners
     const quiz = rawQuiz ? { ...rawQuiz, questions: (rawQuiz.questions || []).filter((q: any) => !q.is_draft) } : null
@@ -76,7 +76,7 @@ export default async function LessonPage({
         .select('*')
         .eq('user_id', user.id)
         .eq('lesson_id', id)
-        .single()
+        .maybeSingle()
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">

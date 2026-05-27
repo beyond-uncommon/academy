@@ -46,20 +46,19 @@ export function SettingsForm({ userId, initialData }: SettingsFormProps) {
         e.preventDefault()
         setLoading(true)
 
-        try {
-            await updateProfile({
-                full_name: formData.full_name || '',
-                username: formData.username || '',
-                bio: formData.bio || '',
-                avatar_url: formData.avatar_url || '',
-            })
+        const res = await updateProfile({
+            full_name: formData.full_name || '',
+            username: formData.username || '',
+            bio: formData.bio || '',
+            avatar_url: formData.avatar_url || '',
+        })
+        if (res?.error) {
+            toast.error(res.error)
+        } else {
             toast.success('Profile updated successfully')
             router.refresh()
-        } catch (error: any) {
-            toast.error(error.message || 'Failed to update profile')
-        } finally {
-            setLoading(false)
         }
+        setLoading(false)
     }
 
     return (

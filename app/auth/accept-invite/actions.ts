@@ -10,9 +10,6 @@ function parseInviteCode(code: string): { role: 'instructor' | 'learner'; uuid: 
     if (parts.length === 2 && (parts[0] === 'instructor' || parts[0] === 'learner')) {
         return { role: parts[0], uuid: parts[1] }
     }
-    if (parts.length === 1) {
-        return { role: 'instructor', uuid: parts[0] }
-    }
     return null
 }
 

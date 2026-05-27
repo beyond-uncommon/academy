@@ -10,72 +10,55 @@ export async function completeLesson(lessonId: string, xpReward: number) {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        throw new Error('Not authenticated')
+        return { error: 'Not authenticated' }
     }
 
-    try {
-        // 1. Update progress
-        const { error: progressError } = await supabase
-            .from('user_progress')
-            .upsert({
-                user_id: user.id,
-                lesson_id: lessonId,
-                completed: true,
-                completed_at: new Date().toISOString(),
-                xp_earned: xpReward
-            }, { onConflict: 'user_id,lesson_id' })
+    const { error: progressError } = await supabase
+        .from('user_progress')
+        .upsert({
+            user_id: user.id,
+            lesson_id: lessonId,
+            completed: true,
+            completed_at: new Date().toISOString(),
+            xp_earned: xpReward
+        }, { onConflict: 'user_id,lesson_id' })
 
-        if (progressError) throw progressError
+    if (progressError) return { error: progressError.message }
 
-        // Get rank before awarding XP
-        const { data: xpBefore } = await supabase
-            .from('user_xp')
-            .select('rank')
-            .eq('user_id', user.id)
-            .single()
+    const { data: xpBefore } = await supabase
+        .from('user_xp')
+        .select('rank')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-        // 2. Award XP via RPC
-        const { error: xpError } = await supabase.rpc('award_xp', {
-            p_user_id: user.id,
-            p_xp: xpReward
-        })
+    const { error: xpError } = await supabase.rpc('award_xp', {
+        p_user_id: user.id,
+        p_xp: xpReward
+    })
+    if (xpError) return { error: xpError.message }
 
-        if (xpError) throw xpError
+    await updateStreak(user.id)
 
-        // 3. Update Streak
-        await updateStreak(user.id)
+    const { data: xpAfter } = await supabase
+        .from('user_xp')
+        .select('rank')
+        .eq('user_id', user.id)
+        .maybeSingle()
 
-        // 4. Check for badges (placeholder for now)
-        // More sophisticated badge logic will be added later in Week 2
+    const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
 
-        // Get rank after awarding XP
-        const { data: xpAfter } = await supabase
-            .from('user_xp')
-            .select('rank')
-            .eq('user_id', user.id)
-            .single()
+    await logActivity('lesson_complete', { lesson_id: lessonId, xp_earned: xpReward })
+    await supabase.rpc('create_notification', {
+        p_user_id: user.id,
+        p_type: 'lesson_completed',
+        p_title: 'Lesson completed',
+        p_body: `You earned ${xpReward} XP`,
+        p_link: `/lesson/${lessonId}`,
+    })
 
-        const rankUp = xpBefore?.rank !== xpAfter?.rank ? xpAfter?.rank : null
+    revalidatePath(`/lesson/${lessonId}`)
+    revalidatePath('/dashboard')
+    revalidatePath('/profile')
 
-        // Log activity
-        await logActivity('lesson_complete', { lesson_id: lessonId, xp_earned: xpReward })
-
-        // Create notification
-        await supabase.rpc('create_notification', {
-            p_user_id: user.id,
-            p_type: 'lesson_completed',
-            p_title: 'Lesson completed',
-            p_body: `You earned ${xpReward} XP`,
-            p_link: `/lesson/${lessonId}`,
-        })
-
-        revalidatePath(`/lesson/${lessonId}`)
-        revalidatePath('/dashboard')
-        revalidatePath('/profile')
-
-        return { success: true, rankUp }
-    } catch (error: any) {
-        console.error('Error completing lesson:', error)
-        return { success: false, error: error.message }
-    }
+    return { success: true, rankUp }
 }

@@ -16,7 +16,7 @@ export async function updateProfile(formData: {
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
-        throw new Error('Not authenticated')
+        return { error: 'Not authenticated' }
     }
 
     // Update the profile
@@ -31,11 +31,10 @@ export async function updateProfile(formData: {
         .eq('id', user.id)
 
     if (error) {
-        // Handle unique constraint on username
         if (error.code === '23505') {
-            throw new Error('Username is already taken')
+            return { error: 'Username is already taken' }
         }
-        throw error
+        return { error: error.message }
     }
 
     revalidatePath('/profile')

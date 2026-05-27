@@ -10,7 +10,7 @@ import type { Metadata } from 'next'
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
     const supabase = await createClient()
-    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', id).single()
+    const { data: profile } = await supabase.from('profiles').select('full_name').eq('id', id).maybeSingle()
     return { title: `${profile?.full_name || 'Student'}'s Portfolio` } satisfies Metadata
 }
 
@@ -19,7 +19,7 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
     const supabase = await createClient()
 
     const [{ data: profile }, { data: xp }, { data: badges }, { data: submissions }, { count: lessonsCount }] = await Promise.all([
-        supabase.from('profiles').select('*').eq('id', id).single(),
+        supabase.from('profiles').select('*').eq('id', id).maybeSingle(),
         supabase.from('user_xp').select('total_xp, rank').eq('user_id', id).maybeSingle(),
         supabase.from('user_badges').select('badge:badges(name, icon_url, rarity)').eq('user_id', id),
         supabase

@@ -1,12 +1,8 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getNotifications, getUnreadCount } from '@/lib/notifications'
-
-function isStaff(role?: string | null) {
-    return role === 'admin' || role === 'instructor'
-}
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient()
@@ -43,10 +39,22 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         getUnreadCount(user.id),
     ])
 
+    const role = profile?.role || 'learner'
+    const isStaff = role === 'admin' || role === 'instructor'
+
+    // Fetch pending review count for staff sidebar badge
+    let pendingReviewCount: number | undefined
+    if (isStaff) {
+        const admin = createAdminClient()
+        const { count } = await admin
+            .from('project_submissions')
+            .select('*', { count: 'exact', head: true })
+            .eq('status', 'pending')
+        pendingReviewCount = count ?? undefined
+    }
+
     const username = profile?.full_name || 'Learner'
     const initials = username.split(' ').map((n: string) => n[0]).join('').toUpperCase() || 'L'
-
-    const role = profile?.role || 'learner'
 
     return (
         <div className="flex min-h-screen bg-background">
@@ -56,13 +64,14 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                 username={username}
                 userInitials={initials}
                 avatarUrl={profile?.avatar_url}
+                pendingReviewCount={pendingReviewCount}
             />
             <div className="flex-1 flex flex-col min-w-0">
                 <TopBar
                     totalXP={xp?.total_xp || 0}
                     streak={streak?.current_streak || 0}
                     rank={xp?.rank || 'beginner'}
-                    isStaff={isStaff(role)}
+                    isStaff={isStaff}
                     unreadNotifications={unreadCount}
                     notifications={notifications}
                 />
