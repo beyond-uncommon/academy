@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck, GraduationCap } from 'lucide-react'
+import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck, GraduationCap, MapPin } from 'lucide-react'
 import type { Metadata } from 'next'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -85,6 +85,13 @@ export default async function AdminPage() {
             icon: UserPlus,
             title: 'Add Admin',
             description: 'Create a new admin account with immediate access.',
+            adminOnly: true,
+        },
+        {
+            href: '/admin/hubs',
+            icon: MapPin,
+            title: 'Innovation Hubs',
+            description: 'Add, rename, or hide the hubs shown during student onboarding.',
             adminOnly: true,
         },
     ]
