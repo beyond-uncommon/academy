@@ -9,6 +9,7 @@ import { UserPlus, CheckCircle2, XCircle, Clock } from 'lucide-react'
 import { RANK_LABELS, type Rank } from '@/types'
 import type { Metadata } from 'next'
 import { InviteStudentDialog } from './components/InviteStudentDialog'
+import { DeleteUserButton } from './components/DeleteUserButton'
 
 export const metadata: Metadata = { title: 'Staff — Students' }
 
@@ -24,7 +25,8 @@ export default async function StudentsPage() {
         .eq('id', user.id)
         .single()
 
-    const isStaff = profile?.role === 'admin' || profile?.role === 'instructor'
+    const isAdmin = profile?.role === 'admin'
+    const isStaff = isAdmin || profile?.role === 'instructor'
     if (!isStaff) redirect('/dashboard')
 
     const admin = createAdminClient()
@@ -100,6 +102,7 @@ export default async function StudentsPage() {
                                     <th className="h-11 px-4 text-right font-medium text-muted-foreground">Quizzes Passed</th>
                                     <th className="h-11 px-4 text-right font-medium text-muted-foreground">Projects Approved</th>
                                     <th className="h-11 px-4 text-right font-medium text-muted-foreground">Joined</th>
+                                    {isAdmin && <th className="h-11 px-4" />}
                                 </tr>
                             </thead>
                             <tbody>
@@ -151,12 +154,17 @@ export default async function StudentsPage() {
                                             <td className="px-4 py-3 text-right text-xs text-muted-foreground">
                                                 {new Date(row.created_at).toLocaleDateString()}
                                             </td>
+                                            {isAdmin && (
+                                                <td className="px-4 py-3 text-right">
+                                                    <DeleteUserButton userId={row.id} name={row.full_name || row.username || 'this user'} />
+                                                </td>
+                                            )}
                                         </tr>
                                     )
                                 })}
                                 {rows.length === 0 && (
                                     <tr>
-                                        <td colSpan={7} className="p-8 text-center text-muted-foreground">No students yet.</td>
+                                        <td colSpan={isAdmin ? 8 : 7} className="p-8 text-center text-muted-foreground">No students yet.</td>
                                     </tr>
                                 )}
                             </tbody>
