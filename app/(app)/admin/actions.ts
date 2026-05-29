@@ -97,6 +97,24 @@ export async function inviteStudentLink(_prevState: unknown, _formData: FormData
     return generateInviteLink('learner')
 }
 
+export async function deleteUser(userId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single()
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+    if (userId === user.id) return { error: 'You cannot delete your own account' }
+
+    const admin = createAdminClient()
+    const { error } = await admin.auth.admin.deleteUser(userId)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/students')
+    return { success: true }
+}
+
 // ─── Course Management ─────────────────────────────────────────
 
 export async function createCourse(_prevState: unknown, formData: FormData) {
