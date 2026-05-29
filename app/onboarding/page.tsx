@@ -21,6 +21,14 @@ export default async function OnboardingPage() {
         redirect('/dashboard')
     }
 
+    const { data: hubRows } = await supabase
+        .from('innovation_hubs')
+        .select('name')
+        .eq('active', true)
+        .order('name')
+
+    const hubs = hubRows?.map((h) => h.name) ?? []
+
     return (
         <div className="min-h-screen flex items-center justify-center p-4 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-100 via-zinc-50 to-white dark:from-zinc-900 dark:via-zinc-950 dark:to-black">
             <div className="w-full max-w-4xl grid md:grid-cols-2 gap-8 items-center bg-white/50 dark:bg-zinc-900/50 border border-zinc-200 dark:border-zinc-800 p-8 rounded-3xl backdrop-blur-sm shadow-2xl">
@@ -37,7 +45,7 @@ export default async function OnboardingPage() {
                         <div className="h-px flex-1 bg-zinc-200 dark:bg-zinc-800" />
                     </div>
                 </div>
-                <OnboardingForm userId={user.id} initialName={profile?.full_name || ''} />
+                <OnboardingForm userId={user.id} initialName={profile?.full_name || ''} hubs={hubs} />
             </div>
         </div>
     )

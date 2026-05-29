@@ -12,14 +12,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { CheckCircle2, Palette, PenTool, Search, Briefcase, DollarSign, Sparkles } from 'lucide-react'
 
-const INNOVATION_HUBS = [
-    'Bulawayo Hub',
-    'Harare Hub',
-    'Mutare Hub',
-    'Gweru Hub',
-    'Chinhoyi Hub',
-]
-
 const SKILL_QUESTIONS = [
     {
         id: 'figma',
@@ -103,7 +95,7 @@ function calculateSkillLevel(answers: Record<string, number>): { level: string; 
     }
 }
 
-export default function OnboardingForm({ userId, initialName }: { userId: string, initialName?: string }) {
+export default function OnboardingForm({ userId, initialName, hubs = [] }: { userId: string, initialName?: string, hubs?: string[] }) {
     const router = useRouter()
     const supabase = createClient()
     const [step, setStep] = useState(1)
@@ -287,7 +279,7 @@ export default function OnboardingForm({ userId, initialName }: { userId: string
                                 <SelectValue placeholder="Select a hub" />
                             </SelectTrigger>
                             <SelectContent>
-                                {INNOVATION_HUBS.map((hub) => (
+                                {hubs.map((hub) => (
                                     <SelectItem key={hub} value={hub}>{hub}</SelectItem>
                                 ))}
                             </SelectContent>
