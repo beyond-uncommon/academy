@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { RANK_LABELS, type Rank } from '@/types'
-import { Users, GraduationCap, Shield } from 'lucide-react'
+import { Users, GraduationCap, Shield, ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Admin — Users' }
@@ -59,6 +60,10 @@ export default async function AdminUsersPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div>
                 <h1 className="text-2xl font-bold">Users</h1>
                 <p className="text-muted-foreground text-sm mt-1">

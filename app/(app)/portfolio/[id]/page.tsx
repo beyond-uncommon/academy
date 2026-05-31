@@ -4,7 +4,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ExternalLink, Trophy, BookOpen, Zap, Briefcase, MapPin } from 'lucide-react'
+import { ExternalLink, Trophy, BookOpen, Zap, Briefcase, MapPin, ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
@@ -39,6 +40,10 @@ export default async function PortfolioPage({ params }: { params: Promise<{ id: 
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
+            <Link href="/community" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Back to Community
+            </Link>
             {/* Profile header */}
             <Card className="border-border/40">
                 <CardContent className="p-8">

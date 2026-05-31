@@ -1,7 +1,8 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Users, Zap, Trophy, TrendingUp, BookOpen, Clock, UserPlus, Flame, Target, Award } from 'lucide-react'
+import { Users, Zap, Trophy, TrendingUp, BookOpen, Clock, UserPlus, Flame, Target, Award, ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
 
 function getSevenDaysAgo() {
     return new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
@@ -127,6 +128,10 @@ export default async function AdminAnalyticsPage() {
 
     return (
         <div className="space-y-8">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div>
                 <h1 className="text-3xl font-bold tracking-tight">Analytics Dashboard</h1>
                 <p className="text-muted-foreground mt-1">Detailed overview of platform engagement and learner success.</p>

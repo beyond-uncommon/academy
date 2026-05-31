@@ -17,9 +17,10 @@ import {
     DialogFooter,
     DialogClose,
 } from '@/components/ui/dialog'
-import { Plus, Pencil, Trash2, EyeOff, Eye, Loader2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, EyeOff, Eye, Loader2, ChevronLeft } from 'lucide-react'
 import { addHub, updateHub, toggleHub, deleteHub } from './actions'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 type Hub = { id: string; name: string; active: boolean }
 
@@ -78,6 +79,10 @@ export function HubsClient({ hubs }: { hubs: Hub[] }) {
 
     return (
         <div className="space-y-6">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">Innovation Hubs</h1>

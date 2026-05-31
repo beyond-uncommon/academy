@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ExternalLink } from 'lucide-react'
+import { ExternalLink, ChevronLeft } from 'lucide-react'
 import type { Metadata } from 'next'
 import { InviteInstructorDialog } from '../components/InviteInstructorDialog'
 import { DeleteUserButton } from '../students/components/DeleteUserButton'
@@ -50,6 +50,10 @@ export default async function InstructorsPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">Instructors</h1>
