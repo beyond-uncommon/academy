@@ -6,7 +6,6 @@ import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboa
 import type { Metadata } from 'next'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { InviteInstructorDialog } from './components/InviteInstructorDialog'
 
 export const metadata: Metadata = { title: 'Staff Panel' }
 
@@ -94,6 +93,13 @@ export default async function AdminPage() {
             description: 'Add, rename, or hide the hubs shown during student onboarding.',
             adminOnly: true,
         },
+        {
+            href: '/admin/instructors',
+            icon: GraduationCap,
+            title: 'Instructors',
+            description: 'View instructor accounts, see review activity, and remove access.',
+            adminOnly: true,
+        },
     ]
 
     const visible = adminSections.filter((s) => isAdmin || !s.adminOnly)
@@ -144,18 +150,6 @@ export default async function AdminPage() {
                         </CardContent>
                     </Card>
                 ))}
-                {isAdmin && (
-                    <Card className="border-border/40 hover:border-border/80 transition-colors">
-                        <CardHeader className="pb-2">
-                            <GraduationCap className="w-5 h-5 text-primary mb-1" />
-                            <CardTitle className="text-sm">Add Instructor</CardTitle>
-                        </CardHeader>
-                        <CardContent className="space-y-3">
-                            <p className="text-xs text-muted-foreground">Create an instructor account with access to reviews and students.</p>
-                            <InviteInstructorDialog />
-                        </CardContent>
-                    </Card>
-                )}
             </div>
         </div>
     )
