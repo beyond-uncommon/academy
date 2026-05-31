@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { UserPlus, CheckCircle2, XCircle, Clock, ExternalLink } from 'lucide-react'
+import { UserPlus, CheckCircle2, XCircle, Clock, ExternalLink, ChevronLeft } from 'lucide-react'
 import { RANK_LABELS, type Rank } from '@/types'
 import type { Metadata } from 'next'
 import { InviteStudentDialog } from './components/InviteStudentDialog'
@@ -79,6 +79,10 @@ export default async function StudentsPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div className="flex items-center justify-between">
                 <div>
                     <h1 className="text-2xl font-bold">Students</h1>

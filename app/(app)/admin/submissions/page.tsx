@@ -4,7 +4,8 @@ import { Card } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { ExternalLink, CheckCircle2, Clock, AlertCircle, MessageSquare } from 'lucide-react'
+import { ExternalLink, CheckCircle2, Clock, AlertCircle, MessageSquare, ChevronLeft } from 'lucide-react'
+import Link from 'next/link'
 import { Textarea } from '@/components/ui/textarea'
 import { reviewSubmission } from '../actions'
 
@@ -36,6 +37,10 @@ export default async function AdminSubmissionsPage() {
 
     return (
         <div className="space-y-6">
+            <Link href="/admin" className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors w-fit">
+                <ChevronLeft className="w-4 h-4" />
+                Staff Panel
+            </Link>
             <div>
                 <h1 className="text-2xl font-bold">Project Submissions</h1>
                 <p className="text-muted-foreground text-sm">Review student work and award final approvals.</p>
