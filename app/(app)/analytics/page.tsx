@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { BookOpen, Zap, Flame, Trophy, ClipboardCheck, Activity, CalendarDays } from 'lucide-react'
-import { getLearnerStats } from '@/lib/analytics'
+import { getLearnerStats, getMonthlyXpTrend } from '@/lib/analytics'
 import { RANK_LABELS, type Rank } from '@/types'
 import type { Metadata } from 'next'
 
@@ -15,8 +15,10 @@ export default async function AnalyticsPage() {
     if (!user) redirect('/login')
 
     const stats = await getLearnerStats(user.id)
+    const monthlyXp = await getMonthlyXpTrend(user.id)
 
     const maxActivity = Math.max(...stats.weeklyActivity.map((d) => d.count), 1)
+    const maxMonthlyXp = Math.max(...monthlyXp.map((d) => d.xp), 1)
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -118,6 +120,34 @@ export default async function AnalyticsPage() {
                                     }}
                                 />
                                 <span className="text-[10px] text-muted-foreground">{day.label}</span>
+                            </div>
+                        ))}
+                    </div>
+                </CardContent>
+            </Card>
+
+            {/* Monthly XP Trend */}
+            <Card className="border-border/40">
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-sm flex items-center gap-2">
+                        <Zap className="w-4 h-4 text-yellow-500" />
+                        XP Trend
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <div className="flex items-end gap-2 h-32">
+                        {monthlyXp.map((m) => (
+                            <div key={m.month} className="flex-1 flex flex-col items-center gap-1 h-full justify-end">
+                                <span className="text-xs text-muted-foreground">{m.xp}</span>
+                                <div
+                                    className="w-full rounded-md bg-yellow-500/20 transition-all"
+                                    style={{
+                                        height: `${Math.max((m.xp / maxMonthlyXp) * 100, m.xp > 0 ? 8 : 4)}%`,
+                                        backgroundColor: m.xp > 0 ? 'rgb(234 179 8)' : 'var(--muted)',
+                                        opacity: m.xp > 0 ? 0.7 : 0.3,
+                                    }}
+                                />
+                                <span className="text-[10px] text-muted-foreground">{m.month}</span>
                             </div>
                         ))}
                     </div>

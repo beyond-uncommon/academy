@@ -127,7 +127,7 @@ export async function getCommunityPosts(opts: GetPostsOptions = {}) {
   if (!posts) return { posts: [], total: 0 }
 
   const postsWithData = await Promise.all(
-    posts.map(async (post: any) => {
+    posts.map(async (post: { id: string; title: string; content: string; type: string; user_id: string; created_at: string; votes: number; profile: { full_name: string; avatar_url: string | null; username: string | null } | null }) => {
       const vote = user ? await getUserVote(post.id) : 0
 
       const { count: commentCount } = await supabase

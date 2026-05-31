@@ -50,7 +50,7 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
         try {
             await addComment({ submission_id: submission.id }, newComment)
             setNewComment('')
-            setComments((prev: any[]) => [...prev, { id: 'temp', submission_id: submission.id, user_id: currentUserId, content: newComment, created_at: new Date().toISOString(), author: { full_name: 'You', avatar_url: null }, replies: [] }])
+            setComments((prev: Comment[]) => [...prev, { id: 'temp', submission_id: submission.id, user_id: currentUserId, parent_id: null, content: newComment, created_at: new Date().toISOString(), author: { full_name: 'You', avatar_url: null }, replies: [] }])
             router.refresh()
         } catch {
             toast.error('Failed to post comment')
@@ -61,7 +61,7 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
     async function handleDeleteComment(commentId: string) {
         try {
             await deleteComment(commentId, { submission_id: submission.id })
-            setComments((prev: any[]) => prev.filter((c: any) => c.id !== commentId))
+            setComments((prev: Comment[]) => prev.filter((c: Comment) => c.id !== commentId))
             router.refresh()
         } catch {
             toast.error('Failed to delete comment')
@@ -151,7 +151,7 @@ export function SubmissionCard({ submission, initialLikes, initialLiked, initial
                             <p className="text-xs text-muted-foreground text-center py-2">No comments yet.</p>
                         ) : (
                             <div className="space-y-2 max-h-48 overflow-y-auto">
-                                {comments.map((comment: any) => (
+                                {comments.map((comment: Comment) => (
                                     <div key={comment.id} className="flex gap-2 text-xs">
                                         <Avatar className="w-5 h-5 shrink-0">
                                             <AvatarFallback className="text-[8px]">

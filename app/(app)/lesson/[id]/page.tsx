@@ -1,7 +1,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
-import { Clock, Zap, ChevronLeft } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Clock, Zap, ChevronLeft, ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -58,8 +59,8 @@ export default async function LessonPage({
         .maybeSingle()
 
     const isCompleted = !!progress?.completed
-    const courseTitle = (lesson.module as any)?.course?.title || 'Unknown Course'
-    const moduleTitle = (lesson.module as any)?.title || 'Unknown Module'
+    const courseTitle = (lesson.module as { title: string; course: { title: string } | null } | null)?.course?.title || 'Unknown Course'
+    const moduleTitle = (lesson.module as { title: string; course: { title: string } | null } | null)?.title || 'Unknown Module'
 
     // Fetch quiz (lesson assessment)
     const { data: rawQuiz } = await supabase
@@ -69,7 +70,7 @@ export default async function LessonPage({
         .maybeSingle()
 
     // Only published questions shown to learners
-    const quiz = rawQuiz ? { ...rawQuiz, questions: (rawQuiz.questions || []).filter((q: any) => !q.is_draft) } : null
+    const quiz = rawQuiz ? { ...rawQuiz, questions: (rawQuiz.questions || []).filter((q: { is_draft: boolean }) => !q.is_draft) } : null
 
     const { data: projectSubmission } = await supabase
         .from('project_submissions')
@@ -77,6 +78,17 @@ export default async function LessonPage({
         .eq('user_id', user.id)
         .eq('lesson_id', id)
         .maybeSingle()
+
+    const { data: moduleLessons } = await supabase
+        .from('lessons')
+        .select('id, title')
+        .eq('module_id', lesson.module_id)
+        .eq('is_published', true)
+        .order('order_index')
+
+    const currentIndex = moduleLessons?.findIndex(l => l.id === lesson.id) ?? -1
+    const prevLesson = currentIndex > 0 ? moduleLessons![currentIndex - 1] : null
+    const nextLesson = currentIndex !== -1 && moduleLessons && currentIndex < moduleLessons.length - 1 ? moduleLessons[currentIndex + 1] : null
 
     return (
         <div className="max-w-4xl mx-auto space-y-6">
@@ -137,7 +149,7 @@ export default async function LessonPage({
                     <ProjectSubmission
                         lessonId={lesson.id}
                         xpReward={lesson.xp_reward}
-                        initialSubmission={projectSubmission as any}
+                        initialSubmission={projectSubmission as { submission_url: string; notes: string; status: string; feedback: string | null; submitted_at: string } | null}
                     />
                 </div>
             ) : (
@@ -159,6 +171,31 @@ export default async function LessonPage({
                         </div>
                     </CardContent>
                 </Card>
+            )}
+
+            {(prevLesson || nextLesson) && (
+                <div className="flex items-center justify-between gap-4">
+                    {prevLesson ? (
+                        <Button variant="outline" asChild>
+                            <Link href={`/lesson/${prevLesson.id}`} className="flex items-center gap-1">
+                                <ChevronLeft className="w-4 h-4" />
+                                Previous Lesson
+                            </Link>
+                        </Button>
+                    ) : (
+                        <div />
+                    )}
+                    {nextLesson ? (
+                        <Button variant="outline" asChild>
+                            <Link href={`/lesson/${nextLesson.id}`} className="flex items-center gap-1">
+                                Next Lesson
+                                <ChevronRight className="w-4 h-4" />
+                            </Link>
+                        </Button>
+                    ) : (
+                        <div />
+                    )}
+                </div>
             )}
 
             {/* Discussion */}

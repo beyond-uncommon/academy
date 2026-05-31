@@ -3,8 +3,9 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, EyeOff, ClipboardCheck, Pencil, ChevronLeft } from 'lucide-react'
+import { ClipboardCheck, Pencil, ChevronLeft } from 'lucide-react'
 import Link from 'next/link'
+import type { Quiz } from '@/types'
 
 const assessmentTypeLabel: Record<string, string> = {
     lesson: 'Lesson',
@@ -63,7 +64,7 @@ export default async function AdminAssessmentsPage() {
                                 </tr>
                             </thead>
                             <tbody className="[&_tr:last-child]:border-0">
-                                {assessments?.map((a: any) => (
+                                {assessments?.map((a: Quiz & { questions?: { count: number }[] }) => (
                                     <tr key={a.id} className="border-b border-border/40 transition-colors hover:bg-muted/50">
                                         <td className="p-4 align-middle font-medium">{a.title}</td>
                                         <td className="p-4 align-middle">

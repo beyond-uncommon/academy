@@ -32,9 +32,9 @@ export default async function CoursesPage() {
     const completedIds = new Set(userProgress?.map(p => p.lesson_id) || [])
 
     const enriched = (courses || []).map(course => {
-        const allLessons = course.modules?.flatMap((m: any) => m.lessons || []) || []
+        const allLessons = course.modules?.flatMap((m: { lessons: { id: string }[] }) => m.lessons || []) || []
         const total = allLessons.length
-        const completed = allLessons.filter((l: any) => completedIds.has(l.id)).length
+        const completed = allLessons.filter((l: { id: string }) => completedIds.has(l.id)).length
         const pct = total > 0 ? Math.round((completed / total) * 100) : 0
         return { ...course, total, completed, pct }
     })

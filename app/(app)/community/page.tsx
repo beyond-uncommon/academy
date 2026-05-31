@@ -1,6 +1,6 @@
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
@@ -10,6 +10,7 @@ import { PostCard } from '@/components/community/PostCard'
 import { CreatePostDialog } from '@/components/community/CreatePostDialog'
 import { getCommunityPosts } from '@/components/community/actions'
 import { CommunityFeed } from '@/components/community/CommunityFeed'
+import type { Profile } from '@/types'
 
 const SORT_OPTIONS = [
   { key: 'hot', label: 'Hot' },
@@ -106,13 +107,13 @@ export default async function CommunityPage(props: {
 
           {/* Posts */}
           <div className="space-y-2">
-            {posts.map((p: any) => (
+            {posts.map((p) => (
               <PostCard
                 key={p.id}
                 id={p.id}
                 userId={p.user_id}
-                authorName={p.profile?.full_name}
-                authorAvatar={p.profile?.avatar_url}
+                authorName={p.profile?.full_name ?? ''}
+                authorAvatar={p.profile?.avatar_url ?? null}
                 title={p.title}
                 content={p.content}
                 type={p.type}
@@ -156,12 +157,12 @@ export default async function CommunityPage(props: {
                       {index === 0 ? <Trophy className="w-4 h-4 text-yellow-500" /> : index === 1 ? <Trophy className="w-4 h-4 text-slate-400" /> : index === 2 ? <Trophy className="w-4 h-4 text-amber-600" /> : <span className="text-xs font-bold text-muted-foreground">{index + 1}</span>}
                     </div>
                     <Avatar className="w-7 h-7 border">
-                      <AvatarImage src={(entry.profile as any)?.avatar_url} />
-                      <AvatarFallback className="text-[10px]">{(entry.profile as any)?.full_name?.charAt(0) || 'U'}</AvatarFallback>
+                      <AvatarImage src={(entry.profile?.[0] as Profile)?.avatar_url ?? undefined} alt={(entry.profile?.[0] as Profile)?.full_name || 'User'} />
+                      <AvatarFallback className="text-[10px]">{(entry.profile?.[0] as Profile)?.full_name?.charAt(0) || 'U'}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
                       <Link href={`/profile/${entry.user_id}`} className="hover:underline">
-                        <p className="text-xs font-medium truncate">{(entry.profile as any)?.full_name}</p>
+                        <p className="text-xs font-medium truncate">{(entry.profile?.[0] as Profile)?.full_name}</p>
                       </Link>
                       <p className="text-[9px] text-muted-foreground uppercase tracking-wider">{entry.rank}</p>
                     </div>

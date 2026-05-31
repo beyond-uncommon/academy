@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useCallback } from 'react'
-import { Card, CardContent, CardHeader } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { CheckCircle2, ChevronRight, Clock, Loader2, Trophy, Zap, AlertTriangle, RefreshCw } from 'lucide-react'
+import { CheckCircle2, ChevronRight, Clock, Loader2, Trophy, Zap } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { toast } from 'sonner'
 import { AssessmentTimer } from './AssessmentTimer'
@@ -314,7 +314,6 @@ export function AssessmentPlayer({ assessment, autoStart = false, onComplete }: 
 
         return (
             <AssessmentResults
-                title={assessment.title}
                 scorePct={results.scorePct}
                 xpEarned={results.xpEarned}
                 correctCount={results.correctCount}

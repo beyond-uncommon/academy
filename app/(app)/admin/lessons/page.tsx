@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Eye, EyeOff, ChevronLeft } from 'lucide-react'
+import { Eye, EyeOff, ChevronLeft, Pencil } from 'lucide-react'
 import Link from 'next/link'
 import { toggleLessonStatus } from '../actions'
 import { CreateLessonDialog } from './components/CreateLessonDialog'
@@ -75,16 +75,23 @@ export default async function AdminLessonsPage() {
                                             )}
                                         </td>
                                         <td className="p-4 align-middle text-right">
-                                            <form action={async () => {
-                                                'use server'
-                                                const res = await toggleLessonStatus(lesson.id, !lesson.is_published)
-                                                if (res?.error) throw new Error(res.error)
-                                            }}>
-                                                <Button variant="ghost" size="sm" className="gap-2">
-                                                    {lesson.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                                                    {lesson.is_published ? 'Unpublish' : 'Publish'}
-                                                </Button>
-                                            </form>
+                                            <div className="flex items-center justify-end gap-1">
+                                                <Link href={`/admin/lessons/${lesson.id}`}>
+                                                    <Button variant="ghost" size="sm">
+                                                        <Pencil className="w-4 h-4" />
+                                                    </Button>
+                                                </Link>
+                                                <form action={async () => {
+                                                    'use server'
+                                                    const res = await toggleLessonStatus(lesson.id, !lesson.is_published)
+                                                    if (res?.error) throw new Error(res.error)
+                                                }}>
+                                                    <Button variant="ghost" size="sm" className="gap-2">
+                                                        {lesson.is_published ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                        {lesson.is_published ? 'Unpublish' : 'Publish'}
+                                                    </Button>
+                                                </form>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}

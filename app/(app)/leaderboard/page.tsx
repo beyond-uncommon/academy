@@ -1,11 +1,11 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Trophy, Zap, Flame } from 'lucide-react'
 import Link from 'next/link'
-import { RANK_LABELS, type Rank } from '@/types'
+import { RANK_LABELS, type Profile, type Rank } from '@/types'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Leaderboard' }
@@ -34,8 +34,8 @@ export default async function LeaderboardPage() {
     const rows = (topXP || []).map((row, i) => ({
         rank: i + 1,
         userId: row.user_id,
-        username: (row.profiles as any)?.username || (row.profiles as any)?.full_name || 'Anonymous',
-        avatarUrl: (row.profiles as any)?.avatar_url,
+        username: (row.profiles?.[0] as Profile)?.username || (row.profiles?.[0] as Profile)?.full_name || 'Anonymous',
+        avatarUrl: (row.profiles?.[0] as Profile)?.avatar_url,
         totalXP: row.total_xp,
         weeklyXP: row.weekly_xp,
         rankLabel: RANK_LABELS[row.rank as Rank] || row.rank,
@@ -45,8 +45,8 @@ export default async function LeaderboardPage() {
     const streakRows = (topStreak || []).map((row, i) => ({
         rank: i + 1,
         userId: row.user_id,
-        username: (row.profiles as any)?.username || (row.profiles as any)?.full_name || 'Anonymous',
-        avatarUrl: (row.profiles as any)?.avatar_url,
+        username: (row.profiles?.[0] as Profile)?.username || (row.profiles?.[0] as Profile)?.full_name || 'Anonymous',
+        avatarUrl: (row.profiles?.[0] as Profile)?.avatar_url,
         streak: row.current_streak,
         isMe: row.user_id === user.id,
     }))

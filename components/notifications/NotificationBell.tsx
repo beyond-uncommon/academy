@@ -6,6 +6,17 @@ import { Bell, BellRing, CheckCheck, Loader2 } from 'lucide-react'
 import { markNotificationRead, markAllNotificationsRead } from './actions'
 import { useRouter } from 'next/navigation'
 
+function timeAgo(dateStr: string) {
+    const now = Date.now()
+    const date = new Date(dateStr).getTime()
+    const diff = Math.floor((now - date) / 1000)
+    if (diff < 60) return 'just now'
+    if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
+    if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
+    if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`
+    return new Date(dateStr).toLocaleDateString()
+}
+
 interface Notification {
   id: string
   title: string
@@ -57,17 +68,6 @@ export function NotificationBell({
     setLoading(false)
   }
 
-    function timeAgo(dateStr: string) {
-        const now = Date.now()
-        const date = new Date(dateStr).getTime()
-        const diff = Math.floor((now - date) / 1000)
-        if (diff < 60) return 'just now'
-        if (diff < 3600) return `${Math.floor(diff / 60)}m ago`
-        if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`
-        if (diff < 2592000) return `${Math.floor(diff / 86400)}d ago`
-        return new Date(dateStr).toLocaleDateString()
-    }
-
     return (
         <div ref={ref} className="relative">
       <Button
@@ -75,7 +75,7 @@ export function NotificationBell({
         size="icon"
         className="relative"
         onClick={() => setOpen(!open)}
-        aria-label="Notifications"
+        aria-label={unread > 0 ? `${unread} unread notifications` : 'Notifications'}
       >
         {unread > 0 ? (
           <BellRing className="w-5 h-5 text-primary" />

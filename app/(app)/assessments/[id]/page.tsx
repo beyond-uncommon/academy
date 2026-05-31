@@ -1,7 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, Lock, CheckCircle2 } from 'lucide-react'
+import { ArrowLeft, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect, notFound } from 'next/navigation'
@@ -29,7 +28,7 @@ export default async function AssessmentPage({
 
     if (!quiz) notFound()
 
-    const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
+    const publishedQuestions = (quiz.questions || []).filter((q: { is_draft?: boolean }) => !q.is_draft)
 
     // Progression check for module assessments
     if (quiz.type === 'module' && quiz.module_id) {
@@ -83,8 +82,8 @@ export default async function AssessmentPage({
             .eq('id', quiz.course_id)
             .single()
 
-        const allModuleLessonIds = course?.modules?.flatMap((m: any) =>
-            (m.lessons || []).map((l: any) => l.id)
+        const allModuleLessonIds = course?.modules?.flatMap((m: { lessons: { id: string }[] }) =>
+            (m.lessons || []).map(l => l.id)
         ) || []
 
         const { data: completedProgress } = await supabase
@@ -118,11 +117,9 @@ export default async function AssessmentPage({
         }
     }
 
-    // Get assessment status
-    const { data: statusData } = await supabase
+    // Get assessment status (for potential future use)
+    await supabase
         .rpc('get_assessment_status', { p_user_id: user.id, p_quiz_id: id })
-
-    const status = Array.isArray(statusData) ? statusData[0] : statusData
 
     // Determine back link
     let backHref = '/assessments'
@@ -149,7 +146,7 @@ export default async function AssessmentPage({
                     id: quiz.id,
                     title: quiz.title,
                     type: quiz.type,
-                    questions: publishedQuestions.map((q: any) => ({
+                    questions: publishedQuestions.map((q: { id: string; question: string; options: { text: string; is_correct: boolean }[]; explanation: string | null; order_index: number }) => ({
                         id: q.id,
                         question: q.question,
                         options: q.options,

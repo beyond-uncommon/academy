@@ -1,11 +1,6 @@
 const RESEND_API_KEY = process.env.RESEND_API_KEY
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
-interface EmailResponse {
-  success: boolean
-  error?: string
-}
-
 export async function sendStreakReminderEmail(
   email: string,
   name: string,

@@ -158,10 +158,10 @@ export default async function ProfilePage() {
                         </p>
                     ) : (
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                            {userBadges.map((ub: any) => (
+                            {userBadges.map((ub: { badge_id: string; badge: { name: string; icon_url: string | null }[] }) => (
                                 <div key={ub.badge_id} className="flex flex-col items-center gap-2 p-2 border border-border/40 rounded-lg bg-secondary/10">
-                                    <span className="text-2xl">{ub.badge?.icon_url?.includes('http') ? '🏅' : (ub.badge?.icon_url || '🏅')}</span>
-                                    <span className="text-[10px] font-medium text-center">{ub.badge?.name}</span>
+                                    <span className="text-2xl">{ub.badge[0]?.icon_url?.includes('http') ? '🏅' : (ub.badge[0]?.icon_url || '🏅')}</span>
+                                    <span className="text-[10px] font-medium text-center">{ub.badge[0]?.name}</span>
                                 </div>
                             ))}
                         </div>

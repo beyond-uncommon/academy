@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
+import type { SkillTreeNode } from '@/types'
 
 export const metadata: Metadata = { title: 'Dashboard' }
 
@@ -46,15 +47,15 @@ export default async function DashboardPage() {
         .eq('is_published', true)
 
     // Find first module that is fully completed but assessment not passed
-    let nextAssessment: any = null
+    let nextAssessment: ({ id: string; module_id: string; title: string; time_limit_minutes: number | null; passing_score_pct: number; xp_base: number } & { moduleLabel: string }) | null = null
     if (moduleAssessments && nodes && allLessons) {
-        for (const node of nodes.sort((a: any, b: any) => (a.position_x || 0) - (b.position_x || 0))) {
+        for (const node of nodes.sort((a: SkillTreeNode, b: SkillTreeNode) => (a.position_x || 0) - (b.position_x || 0))) {
             const moduleLessons = allLessons.filter(l => l.module_id === node.module_id)
             if (moduleLessons.length === 0) continue
             const allDone = moduleLessons.every(l => completedLessonIds.has(l.id))
             if (!allDone) break // Stop at first incomplete module
 
-            const assessment = moduleAssessments.find((a: any) => a.module_id === node.module_id)
+            const assessment = moduleAssessments.find((a) => a.module_id === node.module_id)
             if (assessment) {
                 const { data: statusData } = await supabase
                     .rpc('get_assessment_status', { p_user_id: user.id, p_quiz_id: assessment.id })
@@ -105,6 +106,8 @@ export default async function DashboardPage() {
     ]
 
     const isNewUser = (lessonsCount ?? 0) === 0 && (badgesCount ?? 0) === 0
+
+    const typedBadges = (latestBadges || []) as unknown as { badge_id: string; badge: { name: string; icon_url: string } | null }[]
 
     return (
         <div className="max-w-6xl mx-auto space-y-8">
@@ -250,7 +253,7 @@ export default async function DashboardPage() {
                                         Complete your first lesson to earn the 🌱 First Step badge.
                                     </p>
                                 ) : (
-                                    latestBadges.map((ub: any) => (
+                                    typedBadges.map((ub) => (
                                         <div key={ub.badge_id} title={ub.badge?.name} className="w-8 h-8 rounded-full bg-secondary/20 flex items-center justify-center text-lg border border-border/40">
                                             {ub.badge?.icon_url?.includes('http') ? '🏅' : (ub.badge?.icon_url || '🏅')}
                                         </div>

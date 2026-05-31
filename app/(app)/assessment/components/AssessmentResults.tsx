@@ -2,7 +2,6 @@
 
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Trophy, XCircle, Zap, RefreshCw, Clock, AlertTriangle } from 'lucide-react'
 import { Progress } from '@/components/ui/progress'
 import { RANK_LABELS, type Rank } from '@/types'
@@ -31,7 +30,6 @@ interface AssessmentResultsProps {
     maxAttempts?: number
     canRetake?: boolean
     onRetry?: () => void
-    title: string
 }
 
 export function AssessmentResults({
@@ -48,7 +46,6 @@ export function AssessmentResults({
     maxAttempts,
     canRetake,
     onRetry,
-    title,
 }: AssessmentResultsProps) {
     const isPerfect = scorePct === 100
 

@@ -2,7 +2,7 @@
 
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
-import { ExternalLink, BookOpen, FileText, Globe } from 'lucide-react'
+import { ExternalLink, BookOpen, FileText, Globe, type LucideIcon } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 
 interface Resource {
@@ -16,7 +16,7 @@ interface LessonContentProps {
     content: Record<string, unknown> | null
 }
 
-const resourceTypeIcon: { [key: string]: any } = {
+const resourceTypeIcon: { [key: string]: LucideIcon } = {
     article: FileText,
     docs: BookOpen,
     video: Globe,

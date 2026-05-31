@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Calendar, Clock, MapPin, Users, ExternalLink, Sparkles } from 'lucide-react'
+import { Calendar, Clock, Users, ExternalLink, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -21,32 +21,11 @@ export default async function EventsPage() {
         .order('created_at', { ascending: false })
         .limit(5)
 
-    const events = [
-        {
-            title: 'Design Review Sprint',
-            description: 'Peer review session for current module projects. Share your work and get feedback.',
-            date: 'Next Friday',
-            time: '3:00 PM GMT',
-            type: 'workshop',
-            recurring: true,
-        },
-        {
-            title: 'Portfolio Prep Workshop',
-            description: 'Learn how to present your case studies and build a standout design portfolio.',
-            date: 'Coming Soon',
-            time: 'TBD',
-            type: 'workshop',
-            recurring: false,
-        },
-        {
-            title: 'AMA with Senior Designers',
-            description: 'Ask questions about breaking into product design, career growth, and industry insights.',
-            date: 'Coming Soon',
-            time: 'TBD',
-            type: 'ama',
-            recurring: false,
-        },
-    ]
+    const { data: events } = await supabase
+        .from('events')
+        .select('*')
+        .eq('is_published', true)
+        .order('event_date', { ascending: true, nullsFirst: false })
 
     return (
         <div className="max-w-4xl mx-auto space-y-8">
@@ -64,26 +43,34 @@ export default async function EventsPage() {
                     Upcoming Events
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {events.map((event, i) => (
-                        <Card key={i} className="border-border/40">
+                    {(events ?? []).map((event) => (
+                        <Card key={event.id} className="border-border/40">
                             <CardHeader className="pb-2">
                                 <div className="flex items-start justify-between gap-3">
                                     <CardTitle className="text-sm">{event.title}</CardTitle>
                                     <Badge variant="secondary" className="text-[10px] capitalize shrink-0">
-                                        {event.type === 'workshop' ? 'Workshop' : event.type === 'ama' ? 'AMA' : 'Event'}
+                                        {event.event_type === 'workshop' ? 'Workshop' : event.event_type === 'ama' ? 'AMA' : event.event_type === 'social' ? 'Social' : 'Event'}
                                     </Badge>
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <p className="text-xs text-muted-foreground">{event.description}</p>
                                 <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
-                                    <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{event.date}</span>
-                                    {event.time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{event.time}</span>}
-                                    {event.recurring && <Badge variant="outline" className="text-[9px]">Recurring</Badge>}
+                                    {event.event_date && <span className="flex items-center gap-1"><Calendar className="w-3 h-3" />{event.event_date}</span>}
+                                    {event.event_time && <span className="flex items-center gap-1"><Clock className="w-3 h-3" />{event.event_time}</span>}
+                                    {event.is_recurring && <Badge variant="outline" className="text-[9px]">Recurring</Badge>}
                                 </div>
-                                <Button variant="outline" size="sm" className="gap-2 w-full text-xs" disabled>
-                                    <ExternalLink className="w-3 h-3" /> Notify Me
-                                </Button>
+                                {event.registration_url ? (
+                                    <a href={event.registration_url} target="_blank" rel="noopener noreferrer" className="block">
+                                        <Button variant="outline" size="sm" className="gap-2 w-full text-xs">
+                                            <ExternalLink className="w-3 h-3" /> Register
+                                        </Button>
+                                    </a>
+                                ) : (
+                                    <Button variant="outline" size="sm" className="gap-2 w-full text-xs" disabled>
+                                        <ExternalLink className="w-3 h-3" /> Notify Me
+                                    </Button>
+                                )}
                             </CardContent>
                         </Card>
                     ))}
@@ -107,7 +94,7 @@ export default async function EventsPage() {
                     </Card>
                 ) : (
                     <div className="space-y-2">
-                        {milestones.map((m: any) => (
+                        {milestones.map((m: { id: string; event_type: string; created_at: string }) => (
                             <Card key={m.id} className="border-border/40">
                                 <CardContent className="p-3 flex items-center gap-3">
                                     <div className="w-2 h-2 rounded-full bg-primary shrink-0" />

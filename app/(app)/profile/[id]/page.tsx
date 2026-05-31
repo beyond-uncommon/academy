@@ -131,13 +131,13 @@ export default async function PublicProfilePage({
                                 <p className="text-xs text-muted-foreground text-center py-4 italic">No badges earned yet.</p>
                             ) : (
                                 <div className="flex flex-wrap gap-3">
-                                    {userBadges.slice(0, 4).map((ub: any) => (
+                                    {userBadges.slice(0, 4).map((ub: { badge_id: string; badge: { name: string; icon_url: string | null }[] }) => (
                                         <div key={ub.badge_id} className="group relative">
                                             <div className="w-10 h-10 rounded-full bg-secondary/20 flex items-center justify-center border border-border/40 hover:scale-110 transition-transform cursor-help">
-                                                <span className="text-xl">{ub.badge?.icon_url || '🏅'}</span>
+                                                <span className="text-xl">{ub.badge[0]?.icon_url || '🏅'}</span>
                                             </div>
                                             <div className="absolute top-12 left-1/2 -translate-x-1/2 bg-popover text-popover-foreground text-[8px] px-1.5 py-0.5 rounded border shadow-sm opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 pointer-events-none">
-                                                {ub.badge?.name}
+                                                {ub.badge[0]?.name}
                                             </div>
                                         </div>
                                     ))}

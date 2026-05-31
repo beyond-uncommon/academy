@@ -2,10 +2,10 @@
 
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
-import { ExternalLink, Video, FileText, Link2, Figma, Code, BookOpen, Eye } from 'lucide-react'
+import { ExternalLink, Video, FileText, Link2, Figma, Code, BookOpen, Eye, type LucideIcon } from 'lucide-react'
 import { ResourcePreviewModal } from '@/components/resources/ResourcePreviewModal'
 
-const iconMap: Record<string, any> = {
+const iconMap: Record<string, LucideIcon> = {
   video: Video, article: FileText, figma: Figma, link: Link2,
   code: Code, book: BookOpen, template: FileText, tool: Link2,
 }

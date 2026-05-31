@@ -133,6 +133,22 @@ export async function updatePassword(_prevState: unknown, formData: FormData) {
     redirect('/dashboard')
 }
 
+export async function signInWithOAuth(provider: 'google' | 'github') {
+    const supabase = await createClient()
+    const siteUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+
+    const { data, error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+            redirectTo: `${siteUrl}/auth/callback`,
+        },
+    })
+
+    if (error) return { error: error.message }
+
+    return { url: data.url }
+}
+
 export async function loginAsDemo() {
     const email = process.env.DEMO_EMAIL
     const password = process.env.DEMO_PASSWORD

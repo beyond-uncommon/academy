@@ -9,6 +9,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { signup, resendConfirmation } from '@/app/(auth)/actions'
+import OAuthButtons from '@/app/(auth)/components/OAuthButtons'
 import { MailCheck, Loader2 } from 'lucide-react'
 
 function SubmitButton() {
@@ -132,6 +133,7 @@ export default function SignupPage() {
                     </div>
                     <SubmitButton />
                 </form>
+                <OAuthButtons />
                 <p className="text-center text-sm text-muted-foreground">
                     Already have an account?{' '}
                     <Link href="/login" className="text-foreground font-medium hover:underline">

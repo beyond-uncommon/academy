@@ -45,21 +45,23 @@ function SaveButton() {
 
 export function HubsClient({ hubs }: { hubs: Hub[] }) {
     const router = useRouter()
-    const [addState, addAction] = useActionState(addHub, null) as any
-    const [editState, editAction] = useActionState(updateHub, null) as any
+    const [rawAdd, addAction] = useActionState(addHub, null)
+    const [rawEdit, editAction] = useActionState(updateHub, null)
+    const addState = rawAdd as { success: true } | { error: string } | null
+    const editState = rawEdit as { success: true } | { error: string } | null
     const [editingHub, setEditingHub] = useState<Hub | null>(null)
     const [addOpen, setAddOpen] = useState(false)
     const [isPending, startTransition] = useTransition()
 
     useEffect(() => {
-        if (addState?.error) toast.error(addState.error)
-        if (addState?.success) { toast.success('Hub added'); setAddOpen(false); router.refresh() }
-    }, [addState])
+        if (addState && 'error' in addState) toast.error(addState.error)
+        if (addState && 'success' in addState) { toast.success('Hub added'); startTransition(() => { setAddOpen(false); router.refresh() }) }
+    }, [addState, router])
 
     useEffect(() => {
-        if (editState?.error) toast.error(editState.error)
-        if (editState?.success) { toast.success('Hub updated'); setEditingHub(null); router.refresh() }
-    }, [editState])
+        if (editState && 'error' in editState) toast.error(editState.error)
+        if (editState && 'success' in editState) { toast.success('Hub updated'); startTransition(() => { setEditingHub(null); router.refresh() }) }
+    }, [editState, router])
 
     function handleToggle(hub: Hub) {
         startTransition(async () => {

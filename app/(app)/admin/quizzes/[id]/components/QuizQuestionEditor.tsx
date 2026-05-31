@@ -27,7 +27,7 @@ interface ModuleInfo {
 }
 
 export function QuizQuestionEditor({ quizId, questions: initial, modules }: { quizId: string; questions: Question[]; modules: ModuleInfo[] }) {
-    const [questions, setQuestions] = useState(initial)
+    const [questions] = useState(initial)
     const [editQuestion, setEditQuestion] = useState<Question | null>(null)
     const [dialogOpen, setDialogOpen] = useState(false)
     const [deleteId, setDeleteId] = useState<string | null>(null)

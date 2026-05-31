@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { notFound } from 'next/navigation'
-import { ChevronLeft, ArrowUp, ArrowDown, MessageSquare } from 'lucide-react'
+import { ChevronLeft, MessageSquare } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -101,7 +101,7 @@ export default async function PostPage({
               </p>
             ) : (
               <div className="space-y-1">
-                {comments.map((comment: any, i: number) => (
+                {comments.map((comment: CommentData, i: number) => (
                   <CommentThread
                     key={comment.id}
                     comment={comment}
@@ -120,6 +120,14 @@ export default async function PostPage({
   )
 }
 
+type CommentData = {
+  id: string
+  author: { avatar_url?: string | null; full_name?: string } | null
+  created_at: string
+  content: string
+  replies?: CommentData[]
+}
+
 function CommentThread({
   comment,
   postId,
@@ -127,7 +135,7 @@ function CommentThread({
   depth,
   isLast,
 }: {
-  comment: any
+  comment: CommentData
   postId: string
   currentUserId: string
   depth: number
@@ -150,7 +158,7 @@ function CommentThread({
           <p className="text-xs text-foreground/80 mt-0.5 whitespace-pre-wrap">{comment.content}</p>
         </div>
       </div>
-      {comment.replies?.map((reply: any, i: number) => (
+      {comment.replies?.map((reply: CommentData, i: number) => (
         <div key={reply.id} className="ml-6 border-l border-border/40 pl-3">
           <CommentThread
             comment={reply}

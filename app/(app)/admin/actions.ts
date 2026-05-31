@@ -5,6 +5,17 @@ import { revalidatePath } from 'next/cache'
 import { checkGraduation } from '@/lib/graduation'
 import { signInviteCode } from '@/lib/invite'
 
+interface AdminLessonSummary {
+    title: string
+    content?: { notes?: string; body?: string; text_content?: string } | null
+    type: string
+}
+
+interface AdminModuleSummary {
+    title: string
+    lessons: AdminLessonSummary[]
+}
+
 function isStaff(role?: string | null) {
     return role === 'admin' || role === 'instructor'
 }
@@ -467,7 +478,7 @@ export async function generateQuizQuestions(quizId: string, count = 5, moduleIds
 
     // Fetch lessons from selected modules (or fall back to quiz's own module)
     let moduleTitles: string[] = []
-    let lessons: any[] = []
+    let lessons: AdminLessonSummary[] = []
 
     if (moduleIds && moduleIds.length > 0) {
         const { data: modules } = await supabase
@@ -475,8 +486,8 @@ export async function generateQuizQuestions(quizId: string, count = 5, moduleIds
             .select('title, lessons:lessons(title, content, type)')
             .in('id', moduleIds)
 
-        moduleTitles = (modules || []).map((m: any) => m.title)
-        lessons = (modules || []).flatMap((m: any) => m.lessons || [])
+        moduleTitles = (modules || []).map((m: AdminModuleSummary) => m.title)
+        lessons = (modules || []).flatMap((m: AdminModuleSummary) => m.lessons || [])
     } else if (quiz.module_id) {
         const { data: mod } = await supabase
             .from('modules')
@@ -496,7 +507,7 @@ export async function generateQuizQuestions(quizId: string, count = 5, moduleIds
         courseTitle: quiz.course?.title,
         courseDescription: quiz.course?.description,
         moduleTitle: moduleTitles.join(', '),
-        lessons: lessons.map((l: any) => ({
+        lessons: lessons.map((l: AdminLessonSummary) => ({
             title: l.title,
             contentNotes: l.content?.notes,
             contentBody: l.content?.body || l.content?.text_content,
@@ -689,6 +700,48 @@ export async function createLesson(formData: CreateLessonInput) {
 
     revalidatePath('/admin/lessons')
     revalidatePath('/dashboard')
+
+    return { success: true }
+}
+
+/**
+ * Updates a lesson.
+ */
+export async function updateLesson(lessonId: string, data: {
+    title?: string
+    module_id?: string
+    type?: 'video' | 'text' | 'interactive' | 'project'
+    duration_minutes?: number
+    xp_reward?: number
+    content?: Record<string, unknown>
+    is_published?: boolean
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Not authenticated' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin') return { error: 'Unauthorized' }
+
+    const allowed: Record<string, unknown> = {}
+    if (data.title !== undefined) allowed.title = data.title
+    if (data.module_id !== undefined) allowed.module_id = data.module_id
+    if (data.type !== undefined) allowed.type = data.type
+    if (data.duration_minutes !== undefined) allowed.duration_minutes = data.duration_minutes
+    if (data.xp_reward !== undefined) allowed.xp_reward = data.xp_reward
+    if (data.content !== undefined) allowed.content = data.content
+    if (data.is_published !== undefined) allowed.is_published = data.is_published
+
+    const { error } = await supabase.from('lessons').update(allowed).eq('id', lessonId)
+    if (error) return { error: error.message }
+
+    revalidatePath('/admin/lessons')
+    revalidatePath(`/admin/lessons/${lessonId}`)
 
     return { success: true }
 }
