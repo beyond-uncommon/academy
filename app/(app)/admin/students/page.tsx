@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { UserPlus, CheckCircle2, XCircle, Clock } from 'lucide-react'
+import { UserPlus, CheckCircle2, XCircle, Clock, ExternalLink } from 'lucide-react'
 import { RANK_LABELS, type Rank } from '@/types'
 import type { Metadata } from 'next'
 import { InviteStudentDialog } from './components/InviteStudentDialog'
@@ -118,7 +118,10 @@ export default async function StudentsPage() {
                                                         <AvatarFallback className="text-xs">{initials}</AvatarFallback>
                                                     </Avatar>
                                                     <div>
-                                                        <p className="font-medium">{displayName}</p>
+                                                        <Link href={`/profile/${row.id}`} className="font-medium hover:underline flex items-center gap-1">
+                                                            {displayName}
+                                                            <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                                                        </Link>
                                                         <p className="text-xs text-muted-foreground font-mono">{row.id.slice(0, 8)}…</p>
                                                     </div>
                                                 </div>

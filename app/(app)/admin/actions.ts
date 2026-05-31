@@ -112,6 +112,7 @@ export async function deleteUser(userId: string) {
     if (error) return { error: error.message }
 
     revalidatePath('/admin/students')
+    revalidatePath('/admin/instructors')
     return { success: true }
 }
 
