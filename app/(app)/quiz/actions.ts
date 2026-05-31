@@ -6,6 +6,15 @@ import { calculateQuizXP } from '@/lib/xp'
 import { updateStreak } from '@/lib/gamification'
 import { logActivity } from '@/lib/log-activity'
 
+interface QuizQuestion {
+    id: string
+    question: string
+    options: Array<{ text: string; is_correct: boolean }>
+    is_draft: boolean
+    order_index: number
+    explanation?: string | null
+}
+
 // ─── Legacy submit (kept for backward compat) ─────────────────
 
 export async function submitQuiz(
@@ -33,7 +42,7 @@ export async function submitQuiz(
     let correctCount = 0
     const totalQuestions = quiz.questions.length
 
-    quiz.questions.forEach((q: any) => {
+    quiz.questions.forEach((q: QuizQuestion) => {
         const userAnswer = userAnswers[q.id]
         const correctIndex = (q.options as Array<{ text: string; is_correct: boolean }>)
             .findIndex(o => o.is_correct)
@@ -126,7 +135,7 @@ export async function startAssessment(quizId: string) {
         if (!quiz) throw new Error('Assessment not found')
 
         // Filter to published questions only and shuffle
-        const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
+        const publishedQuestions = (quiz.questions || []).filter((q: QuizQuestion) => !q.is_draft)
 
         // Check can retake
         const { data: retake } = await supabase
@@ -176,10 +185,10 @@ export async function startAssessment(quizId: string) {
                 id: quiz.id,
                 title: quiz.title,
                 type: quiz.type,
-                questions: publishedQuestions.map((q: any) => ({
+                questions: publishedQuestions.map((q: QuizQuestion) => ({
                     id: q.id,
                     question: q.question,
-                    options: q.options.map((o: any) => ({ text: o.text })), // strip is_correct
+                    options: q.options.map((o: { text: string; is_correct: boolean }) => ({ text: o.text })), // strip is_correct
                     order_index: q.order_index,
                 })),
                 time_limit_minutes: quiz.time_limit_minutes,
@@ -194,9 +203,9 @@ export async function startAssessment(quizId: string) {
                 ? new Date(Date.now() + quiz.time_limit_minutes * 60000).toISOString()
                 : null,
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error starting assessment:', error)
-        return { success: false, error: error.message }
+        return { success: false, error: (error as Error).message }
     }
 }
 
@@ -249,15 +258,15 @@ export async function submitAssessment(
             .single()
 
         // Only score published questions
-        const publishedQuestions = (quiz.questions || []).filter((q: any) => !q.is_draft)
+        const publishedQuestions = (quiz.questions || []).filter((q: QuizQuestion) => !q.is_draft)
 
         let correctCount = 0
         const totalQuestions = publishedQuestions.length
 
-        publishedQuestions.forEach((q: any) => {
+        publishedQuestions.forEach((q: QuizQuestion) => {
             const userAnswer = userAnswers[q.id]
             const correctIndex = (q.options as Array<{ text: string; is_correct: boolean }>)
-                .findIndex((o: any) => o.is_correct)
+                .findIndex((o: { text: string; is_correct: boolean }) => o.is_correct)
             if (userAnswer === correctIndex) correctCount++
         })
 
@@ -416,9 +425,9 @@ export async function submitAssessment(
             passed,
             rankUp,
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Error submitting assessment:', error)
-        return { success: false, error: error.message }
+        return { success: false, error: (error as Error).message }
     }
 }
 
@@ -461,9 +470,9 @@ export async function getAssessmentById(quizId: string) {
 
     return {
         ...quiz,
-        questions: quiz.questions?.map((q: any) => ({
+        questions: quiz.questions?.map((q: QuizQuestion) => ({
             ...q,
-            options: q.options?.map((o: any) => ({ text: o.text })),
+            options: q.options?.map((o: { text: string; is_correct: boolean }) => ({ text: o.text })),
         })),
     }
 }

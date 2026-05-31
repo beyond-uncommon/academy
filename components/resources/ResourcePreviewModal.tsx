@@ -4,14 +4,13 @@ import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink, Video, FileText, Link2, Figma, Code, BookOpen, Loader2 } from 'lucide-react'
 
-const resourceConfig: Record<string, { icon: any; color: string }> = {
+const resourceConfig: Record<string, { icon: React.ComponentType<{ className?: string }>; color: string }> = {
   video: { icon: Video, color: 'text-red-500' },
   article: { icon: FileText, color: 'text-blue-500' },
   figma: { icon: Figma, color: 'text-purple-500' },

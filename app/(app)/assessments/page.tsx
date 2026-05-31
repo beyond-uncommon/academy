@@ -1,7 +1,7 @@
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Clock, Zap, Trophy, ArrowRight, CheckCircle2, XCircle, Clock as ClockIcon } from 'lucide-react'
+import { Clock, Zap, Trophy, ArrowRight } from 'lucide-react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -43,8 +43,8 @@ export default async function AssessmentsPage() {
                 </Card>
             ) : (
                 <div className="grid gap-4">
-                    {assessments.map((assessment: any) => (
-                        <AssessmentCard key={assessment.id} assessment={assessment} userId={user.id} />
+                    {assessments.map((assessment) => (
+                        <AssessmentCard key={assessment.id} assessment={assessment} />
                     ))}
                 </div>
             )}
@@ -54,10 +54,17 @@ export default async function AssessmentsPage() {
 
 async function AssessmentCard({
     assessment,
-    userId,
 }: {
-    assessment: any
-    userId: string
+    assessment: {
+        id: string
+        title: string
+        type: string
+        time_limit_minutes: number | null
+        max_attempts: number
+        xp_base: number
+        passing_score_pct: number
+        questions: { count: number }[]
+    }
 }) {
     const status = await getAssessmentStatus(assessment.id)
     const questionCount = assessment.questions?.[0]?.count || 0

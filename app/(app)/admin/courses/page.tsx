@@ -4,9 +4,10 @@ import Link from 'next/link'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Plus, Eye, EyeOff, ArrowRight, Layers, ClipboardCheck } from 'lucide-react'
+import { BookOpen, Eye, EyeOff, ArrowRight, Layers, ClipboardCheck } from 'lucide-react'
 import { toggleCoursePublish } from '../actions'
 import { CreateCourseDialog } from './components/CreateCourseDialog'
+import type { Course } from '@/types'
 
 export default async function AdminCoursesPage() {
     const supabase = await createClient()
@@ -40,7 +41,7 @@ export default async function AdminCoursesPage() {
             </div>
 
             <div className="grid gap-4">
-                {courses?.map((course: any) => (
+                {courses?.map((course: Course & { modules?: { count: number }[]; quizzes?: { count: number }[] }) => (
                     <Card key={course.id} className="border-border/40 hover:border-border/80 transition-colors">
                         <CardContent className="p-5">
                             <div className="flex items-start justify-between gap-4">

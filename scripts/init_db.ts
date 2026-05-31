@@ -1,4 +1,3 @@
-import { createClient } from '@supabase/supabase-js'
 import dotenv from 'dotenv'
 import path from 'path'
 import fs from 'fs'
@@ -14,15 +13,13 @@ if (!supabaseUrl || !supabaseKey) {
     process.exit(1)
 }
 
-const supabase = createClient(supabaseUrl, supabaseKey)
-
 async function runSQL() {
     console.log('🚀 Starting DB Schema Initialization...')
 
     try {
         // 1. Read schema.sql
         const schemaPath = path.resolve(process.cwd(), 'supabase', 'schema.sql')
-        const schemaSql = fs.readFileSync(schemaPath, 'utf8')
+        fs.readFileSync(schemaPath, 'utf8')
 
         console.log('Executing schema.sql...')
         // We have to use rpc if we want to execute raw SQL via the JS client, 

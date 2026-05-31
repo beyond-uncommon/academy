@@ -4,11 +4,12 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, BookOpen, Eye, EyeOff, Layers, Trash2, Plus, Clock, Zap, ClipboardCheck, Pencil } from 'lucide-react'
+import { ArrowLeft, BookOpen, Eye, EyeOff, Layers, Trash2, Clock, Zap, ClipboardCheck, Pencil } from 'lucide-react'
 import { toggleCoursePublish, deleteModule, toggleLessonStatus, toggleQuizPublish } from '../../actions'
 import { CreateModuleDialog } from '../components/CreateModuleDialog'
 import { CreateLessonDialog } from '../../lessons/components/CreateLessonDialog'
 import { CreateQuizDialog } from '../components/CreateQuizDialog'
+import type { Module, Lesson, Quiz } from '@/types'
 
 export default async function CourseDetailPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
@@ -92,7 +93,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                     <CardContent className="p-4 flex items-center gap-3">
                         <BookOpen className="w-5 h-5 text-primary" />
                         <div>
-                            <p className="font-medium">{modules?.reduce((sum: number, m: any) => sum + (m.lessons?.length || 0), 0) || 0} Lessons</p>
+                            <p className="font-medium">{modules?.reduce((sum: number, m: Module & { lessons: Lesson[]; quizzes: Quiz[] }) => sum + (m.lessons?.length || 0), 0) || 0} Lessons</p>
                             <p className="text-xs text-muted-foreground">Phase {course.phase}</p>
                         </div>
                     </CardContent>
@@ -101,7 +102,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                     <CardContent className="p-4 flex items-center gap-3">
                         <ClipboardCheck className="w-5 h-5 text-primary" />
                         <div>
-                            <p className="font-medium">{modules?.reduce((sum: number, m: any) => sum + (m.quizzes?.length || 0), 0) || 0} Quizzes</p>
+                            <p className="font-medium">{modules?.reduce((sum: number, m: Module & { lessons: Lesson[]; quizzes: Quiz[] }) => sum + (m.quizzes?.length || 0), 0) || 0} Quizzes</p>
                             <p className="text-xs text-muted-foreground">Across all modules</p>
                         </div>
                     </CardContent>
@@ -109,7 +110,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
             </div>
 
             <div className="space-y-6">
-                {modules?.map((mod: any) => (
+                {modules?.map((mod: Module & { lessons: Lesson[]; quizzes: Quiz[] }) => (
                     <Card key={mod.id} className="border-border/40">
                         <CardHeader className="pb-3 flex flex-row items-center justify-between">
                             <div className="flex items-center gap-2">
@@ -140,7 +141,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                             {mod.lessons?.length > 0 && (
                                 <div className="space-y-1">
                                     <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Lessons</p>
-                                    {mod.lessons.map((lesson: any) => (
+                                    {mod.lessons.map((lesson: Lesson) => (
                                         <div key={lesson.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-secondary/10">
                                             <div className="flex items-center gap-2 text-sm">
                                                 <span className="text-muted-foreground w-6 text-right text-xs">{lesson.order_index}.</span>
@@ -168,7 +169,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ i
                             )}
 
                             {/* Quizzes */}
-                            {mod.quizzes?.length > 0 && mod.quizzes.map((quiz: any) => (
+                            {mod.quizzes?.length > 0 && mod.quizzes.map((quiz: Quiz) => (
                                 <div key={quiz.id} className="flex items-center justify-between py-1.5 px-3 rounded-md bg-secondary/10 mt-2">
                                     <div className="flex items-center gap-2 text-sm">
                                         <ClipboardCheck className="w-4 h-4 text-primary" />

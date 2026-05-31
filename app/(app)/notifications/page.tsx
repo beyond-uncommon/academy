@@ -1,15 +1,15 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Bell, BellDot, CheckCheck, Clock, ExternalLink, Zap, Trophy, MessageSquare, Award, AlertTriangle, GraduationCap, BookOpen, Sparkles } from 'lucide-react'
+import { Bell, BellDot, CheckCheck, Clock, ExternalLink, Zap, Trophy, MessageSquare, Award, AlertTriangle, GraduationCap, BookOpen, Sparkles, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Notifications' }
 
-const typeConfig: Record<string, { label: string; icon: any; color: string }> = {
+const typeConfig: Record<string, { label: string; icon: LucideIcon; color: string }> = {
     lesson_completed: { label: 'Lesson Completed', icon: BookOpen, color: 'text-blue-500' },
     quiz_passed: { label: 'Quiz Passed', icon: Zap, color: 'text-yellow-500' },
     quiz_failed: { label: 'Quiz Failed', icon: AlertTriangle, color: 'text-red-500' },

@@ -193,9 +193,9 @@ export default async function AdminAnalyticsPage() {
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <p className="text-sm font-medium">
-                                            <span className="text-primary">{(item.profile as any)?.full_name}</span>
+                                            <span className="text-primary">{(item.profile?.[0] as { full_name: string | null } | null)?.full_name}</span>
                                             <span className="text-muted-foreground"> completed </span>
-                                            <span className="font-semibold">{(item.lesson as any)?.title}</span>
+                                            <span className="font-semibold">{(item.lesson?.[0] as { title: string } | null)?.title}</span>
                                         </p>
                                         <p className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">
                                             {new Date(item.completed_at!).toLocaleString()}
@@ -285,7 +285,7 @@ export default async function AdminAnalyticsPage() {
                                         {idx + 1}
                                     </div>
                                     <div className="flex-1">
-                                        <p className="font-medium">{(performer.profile as any)?.full_name || 'Anonymous'}</p>
+                                        <p className="font-medium">{(performer.profile?.[0] as { full_name: string | null; avatar_url: string | null } | null)?.full_name || 'Anonymous'}</p>
                                         <p className="text-xs text-muted-foreground capitalize">{performer.rank}</p>
                                     </div>
                                     <div className="text-right">

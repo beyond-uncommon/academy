@@ -17,6 +17,7 @@ export interface SearchResult {
     type: string
     module_title: string
     course_title: string
+    content_preview: string | null
     match: string
   }>
   profiles: Array<{
@@ -44,13 +45,13 @@ export async function searchAll(query: string): Promise<SearchResult> {
     supabase
       .from('lessons')
       .select(`
-        id, title, type,
+        id, title, type, content,
         module:modules!inner(
           title,
           course:courses!inner(title)
         )
       `)
-      .or(`title.ilike.${searchTerm}`)
+      .or(`title.ilike.${searchTerm},content::text.ilike.${searchTerm}`)
       .eq('is_published', true)
       .limit(5),
     supabase
@@ -60,20 +61,25 @@ export async function searchAll(query: string): Promise<SearchResult> {
       .limit(5),
   ])
 
+  type CourseRow = { id: string; title: string; description: string | null; slug: string; type: string }
+  type LessonRow = { id: string; title: string; type: string; content: unknown; module: { title: string; course: { title: string }[] }[] | null }
+  type ProfileRow = { id: string; full_name: string | null; bio: string | null; avatar_url: string | null }
+
   return {
-    courses: (courses || []).map((c: any) => ({
+    courses: (courses || []).map((c: CourseRow) => ({
       ...c,
       match: c.title,
     })),
-    lessons: (lessons || []).map((l: any) => ({
+    lessons: (lessons || []).map((l: LessonRow) => ({
       id: l.id,
       title: l.title,
       type: l.type,
-      module_title: (l.module as any)?.title || '',
-      course_title: (l.module as any)?.course?.title || '',
+      module_title: l.module?.[0]?.title || '',
+      course_title: l.module?.[0]?.course?.[0]?.title || '',
+      content_preview: l.content ? JSON.stringify(l.content).substring(0, 100) : null,
       match: l.title,
     })),
-    profiles: (profiles || []).map((p: any) => ({
+    profiles: (profiles || []).map((p: ProfileRow) => ({
       ...p,
       match: p.full_name || p.bio || '',
     })),

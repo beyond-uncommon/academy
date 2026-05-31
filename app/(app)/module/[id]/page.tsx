@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench, ClipboardCheck, Lock } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench, ClipboardCheck, Lock, type LucideIcon } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
     return { title: mod?.title || 'Module' } satisfies Metadata
 }
 
-const lessonTypeIcon: Record<string, any> = {
+const lessonTypeIcon: Record<string, LucideIcon> = {
     video: Video,
     text: FileText,
     project: Wrench,
@@ -152,7 +152,7 @@ export default async function ModuleDetailPage({ params }: { params: Promise<{ i
                             <div className="space-y-1">
                                 <p className="text-sm">{assessment.title}</p>
                                 <div className="flex gap-3 text-xs text-muted-foreground">
-                                    <span>{(assessment as any).questions?.[0]?.count || 0} questions</span>
+                                    <span>{(assessment as { questions?: { count: number }[] }).questions?.[0]?.count || 0} questions</span>
                                     {assessment.time_limit_minutes && <span>{assessment.time_limit_minutes} min limit</span>}
                                     <span>Pass: {assessment.passing_score_pct}%</span>
                                 </div>

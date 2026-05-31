@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench, ClipboardCheck, Lock, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CheckCircle2, Clock, Zap, Video, FileText, Wrench, ClipboardCheck, Lock } from 'lucide-react'
 import Link from 'next/link'
 import type { Metadata } from 'next'
 
@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return { title: course?.title || 'Course' } satisfies Metadata
 }
 
-const lessonTypeIcon: Record<string, any> = {
+const lessonTypeIcon: Record<string, React.ComponentType<{ className?: string }>> = {
     video: Video,
     text: FileText,
     project: Wrench,
@@ -61,7 +61,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
     const completedIds = new Set(userProgress?.map(p => p.lesson_id) || [])
 
     // Fetch module assessments for this course
-    const moduleIds = (course.modules || []).map((m: any) => m.id)
+    const moduleIds = (course.modules || []).map((m: { id: string }) => m.id)
     const { data: moduleAssessments } = await supabase
         .from('quizzes')
         .select('*, questions:quiz_questions(count)')
@@ -79,7 +79,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
         .maybeSingle()
 
     // Fetch user's assessment statuses
-    const assessmentMap = new Map<string, any>()
+    const assessmentMap = new Map<string, { attempt_count: number; best_score: number; passed: boolean; has_passed?: boolean }>()
     if (moduleAssessments) {
         for (const a of moduleAssessments) {
             const { data } = await supabase
@@ -95,16 +95,16 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
         assessmentMap.set(courseAssessment.id, status || { attempt_count: 0, best_score: 0, passed: false })
     }
 
-    const modules = [...(course.modules || [])].sort((a: any, b: any) => a.order_index - b.order_index)
+    const modules = [...(course.modules || [])].sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
 
-    const allLessons = modules.flatMap((m: any) =>
-        [...(m.lessons || [])].sort((a: any, b: any) => a.order_index - b.order_index)
+    const allLessons = modules.flatMap((m: { lessons: { id: string; title: string; type: string; duration_minutes?: number; xp_reward?: number; order_index: number; is_published: boolean }[]; order_index: number }) =>
+        [...(m.lessons || [])].sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
     )
     const totalLessons = allLessons.length
-    const completedCount = allLessons.filter((l: any) => completedIds.has(l.id)).length
+    const completedCount = allLessons.filter((l: { id: string }) => completedIds.has(l.id)).length
     const pct = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0
 
-    const nextLesson = allLessons.find((l: any) => !completedIds.has(l.id) && l.is_published)
+    const nextLesson = allLessons.find((l: { id: string; is_published: boolean }) => !completedIds.has(l.id) && l.is_published)
 
     return (
         <div className="max-w-3xl mx-auto space-y-6">
@@ -141,14 +141,14 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
 
             {/* Modules & lessons with assessments */}
             <div className="space-y-4">
-                {modules.map((module: any, i: number) => {
-                    const lessons = [...(module.lessons || [])].sort((a: any, b: any) => a.order_index - b.order_index)
-                    const modCompleted = lessons.filter((l: any) => completedIds.has(l.id)).length
+                {modules.map((module: { id: string; title: string; order_index: number; xp_available?: number; lessons: { id: string; title: string; type: string; duration_minutes?: number; xp_reward?: number; order_index: number; is_published: boolean }[] }, i: number) => {
+                    const lessons = [...(module.lessons || [])].sort((a: { order_index: number }, b: { order_index: number }) => a.order_index - b.order_index)
+                    const modCompleted = lessons.filter((l: { id: string }) => completedIds.has(l.id)).length
                     const modPct = lessons.length > 0 ? Math.round((modCompleted / lessons.length) * 100) : 0
-                    const allLessonsInModDone = lessons.length > 0 && lessons.every((l: any) => completedIds.has(l.id))
+                    const allLessonsInModDone = lessons.length > 0 && lessons.every((l: { id: string }) => completedIds.has(l.id))
 
                     // Find module assessment
-                    const modAssessment = moduleAssessments?.find((a: any) => a.module_id === module.id)
+                    const modAssessment = moduleAssessments?.find((a: { module_id: string }) => a.module_id === module.id)
                     const modAssessmentStatus = modAssessment ? assessmentMap.get(modAssessment.id) : null
 
                     return (
@@ -167,7 +167,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                             </CardHeader>
                             <CardContent className="pt-0">
                                 <ul className="space-y-1">
-                                    {lessons.map((lesson: any) => {
+                                    {lessons.map((lesson: { id: string; title: string; type: string; duration_minutes?: number; xp_reward?: number; order_index: number; is_published: boolean }) => {
                                         const done = completedIds.has(lesson.id)
                                         const Icon = lessonTypeIcon[lesson.type as keyof typeof lessonTypeIcon] || FileText
                                         return (
@@ -207,7 +207,7 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                                 {modAssessment && (
                                     <ModuleAssessmentEntry
                                         assessment={modAssessment}
-                                        status={modAssessmentStatus}
+                                        status={modAssessmentStatus ?? null}
                                         allLessonsDone={allLessonsInModDone}
                                     />
                                 )}
@@ -226,10 +226,10 @@ export default async function CourseDetailPage({ params }: { params: Promise<{ s
                     <CardContent>
                         <CourseAssessmentEntry
                             assessment={courseAssessment}
-                            status={assessmentMap.get(courseAssessment.id)}
-                            allModulesDone={modules.every((m: any) => {
-                                const mLessons = [...(m.lessons || [])].filter((l: any) => l.is_published)
-                                return mLessons.length > 0 && mLessons.every((l: any) => completedIds.has(l.id))
+                            status={assessmentMap.get(courseAssessment.id) ?? null}
+                            allModulesDone={modules.every((m: { lessons: { id: string; is_published: boolean }[] }) => {
+                                const mLessons = [...(m.lessons || [])].filter((l: { is_published: boolean }) => l.is_published)
+                                return mLessons.length > 0 && mLessons.every((l: { id: string }) => completedIds.has(l.id))
                             })}
                         />
                     </CardContent>
@@ -244,8 +244,8 @@ function ModuleAssessmentEntry({
     status,
     allLessonsDone,
 }: {
-    assessment: any
-    status: any
+    assessment: { id: string; questions?: { count: number }[]; time_limit_minutes?: number; module_id?: string }
+    status: { has_passed?: boolean; attempt_count?: number; best_score?: number; passed?: boolean } | null
     allLessonsDone: boolean
 }) {
     const questionCount = assessment.questions?.[0]?.count || 0
@@ -286,8 +286,8 @@ function CourseAssessmentEntry({
     status,
     allModulesDone,
 }: {
-    assessment: any
-    status: any
+    assessment: { id: string; questions?: { count: number }[]; time_limit_minutes?: number; module_id?: string }
+    status: { has_passed?: boolean; attempt_count?: number; best_score?: number; passed?: boolean } | null
     allModulesDone: boolean
 }) {
     const questionCount = assessment.questions?.[0]?.count || 0

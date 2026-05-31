@@ -37,8 +37,8 @@ export async function getComments(target: { lesson_id?: string; submission_id?: 
 
   if (!data) return []
 
-  const topLevel = data.filter((c: any) => !c.parent_id) as Comment[]
-  const replies = data.filter((c: any) => c.parent_id) as Comment[]
+  const topLevel = data.filter((c: Comment) => !c.parent_id)
+  const replies = data.filter((c: Comment) => c.parent_id)
 
   return topLevel.map((c) => ({
     ...c,

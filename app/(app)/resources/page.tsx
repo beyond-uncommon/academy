@@ -37,7 +37,7 @@ export default async function ResourcesPage(props: {
   }> = []
 
   for (const lesson of lessons || []) {
-    const content = lesson.content as Record<string, any> | null
+    const content = lesson.content as Record<string, unknown> | null
     const lessonResources = content?.resources
     if (Array.isArray(lessonResources)) {
       for (const r of lessonResources) {
@@ -48,9 +48,9 @@ export default async function ResourcesPage(props: {
             type: r.type || 'link',
             lessonTitle: lesson.title,
             lessonId: lesson.id,
-            moduleTitle: (lesson.module as any)?.title || '',
-            courseTitle: (lesson.module as any)?.course?.title || '',
-            courseSlug: (lesson.module as any)?.course?.slug || '',
+            moduleTitle: (lesson.module as unknown as { title: string; course: { title: string; slug: string } | null } | null)?.title || '',
+            courseTitle: (lesson.module as unknown as { title: string; course: { title: string; slug: string } | null } | null)?.course?.title || '',
+            courseSlug: (lesson.module as unknown as { title: string; course: { title: string; slug: string } | null } | null)?.course?.slug || '',
           })
         }
       }

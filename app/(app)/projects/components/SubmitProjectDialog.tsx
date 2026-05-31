@@ -14,7 +14,7 @@ import { useRouter } from 'next/navigation'
 
 interface Submission {
     submission_url: string
-    notes: string
+    notes: string | null
     status: string
     feedback?: string | null
 }

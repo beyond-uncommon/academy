@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Progress } from '@/components/ui/progress'
 import { Button } from '@/components/ui/button'
-import { Wrench, Clock, Zap, CheckCircle2, AlertCircle, Clock4, MessageSquare } from 'lucide-react'
+import { Wrench, Clock, Zap, CheckCircle2, AlertCircle, Clock4, MessageSquare, type LucideIcon } from 'lucide-react'
 import { SubmitProjectDialog } from './components/SubmitProjectDialog'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Projects' }
 
-const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; icon: any }> = {
+const statusConfig: Record<string, { label: string; variant: 'default' | 'secondary' | 'outline' | 'destructive'; icon: LucideIcon }> = {
     pending: { label: 'Awaiting Review', variant: 'secondary', icon: Clock4 },
     reviewed: { label: 'Needs Revision', variant: 'destructive', icon: AlertCircle },
     approved: { label: 'Approved', variant: 'default', icon: CheckCircle2 },
@@ -35,7 +35,7 @@ export default async function ProjectsPage() {
             .order('submitted_at', { ascending: false }),
     ])
 
-    const submissionMap = new Map<string, any>()
+    const submissionMap = new Map<string, { status: string; submission_url: string; notes: string | null; feedback: string | null; score: number | null; lesson_id: string; id: string; submitted_at: string }>()
     for (const s of submissions || []) {
         if (s.lesson_id && !submissionMap.has(s.lesson_id)) {
             submissionMap.set(s.lesson_id, s)
@@ -76,7 +76,7 @@ export default async function ProjectsPage() {
                         const sub = submissionMap.get(lesson.id)
                         const status = sub?.status || null
                         const cfg = status ? statusConfig[status] : null
-                        const moduleInfo = lesson.module as any
+                        const moduleInfo = lesson.module as { title: string; course: { title: string; slug: string } | null } | null
                         return (
                             <Card key={lesson.id} className="border-border/40">
                                 <CardHeader className="pb-3">

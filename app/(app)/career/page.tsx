@@ -15,6 +15,7 @@ import {
   FileText,
   Eye
 } from 'lucide-react'
+import type { Badge as BadgeType } from '@/types'
 
 export const metadata = {
   title: 'Career Services',
@@ -116,7 +117,7 @@ export default async function CareerServicesPage() {
           <CardContent className="space-y-4">
             {profile?.certificates?.length ? (
               <div className="space-y-3">
-                {profile.certificates.map((cert: any) => (
+                {profile.certificates.map((cert: { id: string; certificate_id: string }) => (
                   <div key={cert.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
                       <Award className="w-5 h-5 text-yellow-500" />
@@ -143,12 +144,12 @@ export default async function CareerServicesPage() {
               <div className="pt-4 border-t">
                 <p className="text-sm font-medium mb-3">Earned Badges</p>
                 <div className="flex flex-wrap gap-2">
-                  {badges.slice(0, 6).map((item: any) => (
-                    <Badge key={item.badge?.id} variant="outline" className="gap-1">
-                      {(item.badge as any)?.rarity === 'legendary' && '🌟'}
-                      {(item.badge as any)?.rarity === 'epic' && '💜'}
-                      {(item.badge as any)?.rarity === 'rare' && '💙'}
-                      {item.badge?.name}
+                  {badges.slice(0, 6).map((item: { badge: BadgeType[] }) => (
+                    <Badge key={item.badge[0]?.id} variant="outline" className="gap-1">
+                      {(item.badge[0] as BadgeType)?.rarity === 'legendary' && '🌟'}
+                      {(item.badge[0] as BadgeType)?.rarity === 'epic' && '💜'}
+                      {(item.badge[0] as BadgeType)?.rarity === 'rare' && '💙'}
+                      {item.badge[0]?.name}
                     </Badge>
                   ))}
                 </div>
@@ -211,7 +212,7 @@ export default async function CareerServicesPage() {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
-                  Add "Product Design Student" or "UX Learner" to your headline
+                  Add &quot;Product Design Student&quot; or &quot;UX Learner&quot; to your headline
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
@@ -219,7 +220,7 @@ export default async function CareerServicesPage() {
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
-                  Showcase your badges in the "Skills" section
+                  Showcase your badges in the &quot;Skills&quot; section
                 </li>
                 <li className="flex items-start gap-2">
                   <ChevronRight className="w-4 h-4 mt-0.5 shrink-0" />
@@ -231,10 +232,10 @@ export default async function CareerServicesPage() {
               <h4 className="font-medium">Sample Headlines</h4>
               <div className="space-y-2 text-sm">
                 <p className="p-3 bg-muted/50 rounded-lg italic">
-                  "Aspiring UX Designer | Learning Product Design at Academy | {profile?.user_xp?.[0]?.rank || 'Beginner'} Level"
+                  &quot;Aspiring UX Designer | Learning Product Design at Academy | {profile?.user_xp?.[0]?.rank || 'Beginner'} Level&quot;
                 </p>
                 <p className="p-3 bg-muted/50 rounded-lg italic">
-                  "{profile?.certificates?.length || 0} Design Certifications | Building my portfolio at Academy"
+                  &quot;{profile?.certificates?.length || 0} Design Certifications | Building my portfolio at Academy&quot;
                 </p>
               </div>
             </div>

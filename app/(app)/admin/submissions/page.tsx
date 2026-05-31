@@ -54,11 +54,11 @@ export default async function AdminSubmissionsPage() {
                                 <div className="flex items-center justify-between">
                                     <div className="flex items-center gap-3">
                                         <Avatar className="w-8 h-8">
-                                            <AvatarImage src={(sub.profile as any)?.avatar_url} />
-                                            <AvatarFallback>{(sub.profile as any)?.full_name?.charAt(0)}</AvatarFallback>
+                                            <AvatarImage src={(sub.profile?.[0] as { full_name: string | null; avatar_url: string | null; username: string | null } | null)?.avatar_url ?? undefined} alt="User avatar" />
+                                            <AvatarFallback>{(sub.profile?.[0] as { full_name: string | null; avatar_url: string | null; username: string | null } | null)?.full_name?.charAt(0) ?? '?'}</AvatarFallback>
                                         </Avatar>
                                         <div>
-                                            <p className="text-sm font-medium">{(sub.profile as any)?.full_name}</p>
+                                            <p className="text-sm font-medium">{(sub.profile?.[0] as { full_name: string | null; avatar_url: string | null; username: string | null } | null)?.full_name ?? 'Unknown'}</p>
                                             <p className="text-[10px] text-muted-foreground uppercase tracking-wider">
                                                 Submitted {new Date(sub.submitted_at).toLocaleDateString()}
                                             </p>
@@ -108,7 +108,7 @@ export default async function AdminSubmissionsPage() {
                                     <Textarea
                                         name="feedback"
                                         placeholder="What should they improve?"
-                                        defaultValue={(sub as any).feedback || ''}
+                                        defaultValue={sub.feedback || ''}
                                         disabled={sub.status === 'approved'}
                                         className="text-xs min-h-[80px] resize-none"
                                     />
@@ -129,7 +129,7 @@ export default async function AdminSubmissionsPage() {
                                     const res = await reviewSubmission(sub.id, 'approved', undefined, feedback || undefined)
                                     if (res?.error) throw new Error(res.error)
                                 }}>
-                                    <input type="hidden" name="feedback" value={(sub as any).feedback || ''} />
+                                    <input type="hidden" name="feedback" value={sub.feedback || ''} />
                                     <Button
                                         type="submit"
                                         className="w-full gap-2 bg-green-600 hover:bg-green-700 text-white border-0"

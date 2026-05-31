@@ -62,6 +62,34 @@ interface SidebarProps {
     pendingReviewCount?: number
 }
 
+function NavButton({ href, icon: Icon, label, active, badge, pathname, collapsed }: { href: string; icon: React.ComponentType<{ className?: string }>; label: string; active?: boolean; badge?: number; pathname: string; collapsed: boolean }) {
+    const isActive = active ?? (href === '/' ? pathname === href : pathname.startsWith(href))
+    return (
+        <Link href={href} aria-current={isActive ? 'page' : undefined}>
+            <Button
+                variant={isActive ? 'secondary' : 'ghost'}
+                className={cn(
+                    'w-full justify-start gap-3 text-sm font-medium relative',
+                    collapsed ? 'px-0 justify-center' : '',
+                    isActive ? '' : 'text-muted-foreground hover:text-foreground'
+                )}
+                title={collapsed ? label : undefined}
+            >
+                <Icon className="w-4 h-4 shrink-0" />
+                {!collapsed && label}
+                {badge != null && badge > 0 && (
+                    <span className={cn(
+                        'flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-primary text-primary-foreground',
+                        collapsed ? 'absolute -top-1 -right-1' : 'ml-auto'
+                    )}>
+                        {badge > 99 ? '99+' : badge}
+                    </span>
+                )}
+            </Button>
+        </Link>
+    )
+}
+
 export function Sidebar({
     isAdmin = false,
     isInstructor = false,
@@ -73,34 +101,6 @@ export function Sidebar({
     const pathname = usePathname()
     const [collapsed, setCollapsed] = useState(false)
     const showStaffNav = isAdmin || isInstructor
-
-    function NavButton({ href, icon: Icon, label, active, badge }: { href: string; icon: any; label: string; active?: boolean; badge?: number }) {
-        const isActive = active ?? (href === '/' ? pathname === href : pathname.startsWith(href))
-        return (
-            <Link href={href}>
-                <Button
-                    variant={isActive ? 'secondary' : 'ghost'}
-                    className={cn(
-                        'w-full justify-start gap-3 text-sm font-medium relative',
-                        collapsed ? 'px-0 justify-center' : '',
-                        isActive ? '' : 'text-muted-foreground hover:text-foreground'
-                    )}
-                    title={collapsed ? label : undefined}
-                >
-                    <Icon className="w-4 h-4 shrink-0" />
-                    {!collapsed && label}
-                    {badge != null && badge > 0 && (
-                        <span className={cn(
-                            'flex items-center justify-center w-5 h-5 text-[10px] font-bold rounded-full bg-primary text-primary-foreground',
-                            collapsed ? 'absolute -top-1 -right-1' : 'ml-auto'
-                        )}>
-                            {badge > 99 ? '99+' : badge}
-                        </span>
-                    )}
-                </Button>
-            </Link>
-        )
-    }
 
     return (
         <aside className={cn(
@@ -126,14 +126,16 @@ export function Sidebar({
                     collapsed ? 'justify-center' : 'px-2'
                 )}
                 title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                aria-expanded={!collapsed}
+                aria-controls="sidebar-nav"
             >
                 {collapsed ? <PanelLeftOpen className="w-4 h-4" /> : <PanelLeftClose className="w-4 h-4" />}
             </button>
 
             {/* Nav */}
-            <nav className="flex-1 space-y-1">
+            <nav id="sidebar-nav" className="flex-1 space-y-1" aria-label="Main navigation">
                 {navItems.map((item) => (
-                    <NavButton key={item.href} href={item.href} icon={item.icon} label={item.label} active={pathname === item.href} />
+                    <NavButton key={item.href} href={item.href} icon={item.icon} label={item.label} pathname={pathname} collapsed={collapsed} />
                 ))}
 
                 {showStaffNav && (
@@ -148,22 +150,22 @@ export function Sidebar({
                         {collapsed && <div className="mt-4 mb-2 border-t border-border/40" />}
                         {isAdmin && (
                             <>
-                                <NavButton href="/admin" icon={Shield} label="Overview" />
-                                <NavButton href="/admin/courses" icon={BookOpen} label="Courses" />
-                                <NavButton href="/admin/lessons" icon={BookOpen} label="Lessons" />
-                                <NavButton href="/admin/assessments" icon={ClipboardCheck} label="Assessments" />
-                                <NavButton href="/admin/users" icon={Users} label="Users" />
-                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" />
-                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} />
-                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" />
+                                <NavButton href="/admin" icon={Shield} label="Overview" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/courses" icon={BookOpen} label="Courses" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/lessons" icon={BookOpen} label="Lessons" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/assessments" icon={ClipboardCheck} label="Assessments" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/users" icon={Users} label="Users" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" pathname={pathname} collapsed={collapsed} />
                             </>
                         )}
                         {isInstructor && (
                             <>
-                                <NavButton href="/admin" icon={Shield} label="Overview" />
-                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" />
-                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} />
-                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" />
+                                <NavButton href="/admin" icon={Shield} label="Overview" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/students" icon={GraduationCap} label="Students" pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/submissions" icon={Trophy} label="Submissions" badge={pendingReviewCount} pathname={pathname} collapsed={collapsed} />
+                                <NavButton href="/admin/analytics" icon={BarChart2} label="Analytics" pathname={pathname} collapsed={collapsed} />
                             </>
                         )}
                     </>

@@ -1,8 +1,10 @@
 import { Sidebar } from '@/components/layout/Sidebar'
 import { TopBar } from '@/components/layout/TopBar'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { getNotifications, getUnreadCount } from '@/lib/notifications'
+import { PushNotificationManager } from '@/components/PushNotificationManager'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
     const supabase = await createClient()
@@ -72,10 +74,18 @@ export default async function AppLayout({ children }: { children: React.ReactNod
                     streak={streak?.current_streak || 0}
                     rank={xp?.rank || 'beginner'}
                     isStaff={isStaff}
+                    isAdmin={role === 'admin'}
+                    isInstructor={role === 'instructor'}
+                    username={username}
+                    userInitials={initials}
+                    avatarUrl={profile?.avatar_url}
+                    pendingReviewCount={pendingReviewCount}
                     unreadNotifications={unreadCount}
                     notifications={notifications}
                 />
-                <main className="flex-1 p-6">{children}</main>
+                <main id="main-content" className="flex-1 p-6 pb-16 md:pb-6">{children}</main>
+                <MobileBottomNav />
+                <PushNotificationManager />
             </div>
         </div>
     )

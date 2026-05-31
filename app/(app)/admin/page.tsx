@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck, GraduationCap, MapPin } from 'lucide-react'
+import { BookOpen, Users, BarChart2, ArrowRight, Trophy, UserPlus, LayoutDashboard, ClipboardCheck, GraduationCap, MapPin, Calendar } from 'lucide-react'
 import type { Metadata } from 'next'
 import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
@@ -35,7 +35,7 @@ export default async function AdminPage() {
 
     interface AdminSection {
         href: string
-        icon: any
+        icon: React.ComponentType<{ className?: string }>
         title: string
         description: string
         adminOnly: boolean
@@ -98,6 +98,13 @@ export default async function AdminPage() {
             icon: GraduationCap,
             title: 'Instructors',
             description: 'View instructor accounts, see review activity, and remove access.',
+            adminOnly: true,
+        },
+        {
+            href: '/admin/events',
+            icon: Calendar,
+            title: 'Events',
+            description: 'Create and manage workshops, AMAs, and community events.',
             adminOnly: true,
         },
     ]

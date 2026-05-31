@@ -31,16 +31,17 @@ function SubmitButton() {
 
 export function InviteStudentDialog() {
     const [open, setOpen] = useState(false)
-    const [state, formAction] = useActionState(inviteStudentLink, null) as any
+    const [rawState, formAction] = useActionState(inviteStudentLink, null)
+    const state = rawState as { success: true; link: string } | { error: string } | null
     const router = useRouter()
     const [copied, setCopied] = useState(false)
 
     useEffect(() => {
-        if (state?.error) toast.error(state.error)
+        if (state && 'error' in state) toast.error(state.error)
     }, [state])
 
     function handleCopy() {
-        if (state?.link) {
+        if (state && 'link' in state) {
             navigator.clipboard.writeText(state.link)
             setCopied(true)
             setTimeout(() => setCopied(false), 2000)
@@ -56,7 +57,7 @@ export function InviteStudentDialog() {
                 </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px]">
-                {state?.success ? (
+                {state && 'success' in state ? (
                     <div className="py-6 space-y-6">
                         <div className="flex flex-col items-center gap-3 text-center">
                             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center">

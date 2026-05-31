@@ -73,6 +73,7 @@ export function PostCard({
         <button
           onClick={() => handleVote(1)}
           disabled={voting}
+          aria-label="Upvote"
           className={`p-1 rounded transition-colors ${myVote === 1 ? 'text-orange-500' : 'text-muted-foreground hover:text-orange-500 hover:bg-orange-500/10'}`}
         >
           {voting ? <Loader2 className="w-4 h-4 animate-spin" /> : <ChevronUp className="w-4 h-4" />}
@@ -83,6 +84,7 @@ export function PostCard({
         <button
           onClick={() => handleVote(-1)}
           disabled={voting}
+          aria-label="Downvote"
           className={`p-1 rounded transition-colors ${myVote === -1 ? 'text-blue-500' : 'text-muted-foreground hover:text-blue-500 hover:bg-blue-500/10'}`}
         >
           <ChevronDown className="w-4 h-4" />
@@ -114,7 +116,7 @@ export function PostCard({
         <div className="flex items-center gap-3 mt-2 text-[11px] text-muted-foreground">
           <Link href={`/profile/${userId}`} className="flex items-center gap-1 hover:text-foreground transition-colors">
             <Avatar className="w-4 h-4 border">
-              <AvatarImage src={authorAvatar ?? undefined} />
+              <AvatarImage src={authorAvatar ?? undefined} alt={authorName || 'User avatar'} />
               <AvatarFallback className="text-[6px]">{authorName?.charAt(0) || 'U'}</AvatarFallback>
             </Avatar>
             <span className="truncate max-w-[120px]">{authorName}</span>
